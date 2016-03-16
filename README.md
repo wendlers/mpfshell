@@ -22,6 +22,8 @@ but only with the ALPHA v02 from the kickstarter.
   
 ## Usage
 
+__Note__: The tool only works if the REPL is accessible on the device!
+
 Start the shell with:
 
     ./mpfshell.sh
