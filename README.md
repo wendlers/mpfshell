@@ -13,7 +13,7 @@ __Note__: At the time of writing, only text files (no binaries) are supported.
 ## Requirements
 
 * ESP8266 board running Micropython (at least mp-esp8266-firmware-v02.bin from the kickstarter)
-* The [pyboard.py tool](https://github.com/micropython/micropython/tree/master/tools) from the 
+* The [pyboard.py] (https://github.com/micropython/micropython/tree/master/tools) tool from the 
   Micropython repository needs to be in the python path (for convenience, this file is included here too)
   
   
