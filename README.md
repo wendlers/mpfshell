@@ -8,7 +8,10 @@ The shell is a "quick" solution for up/downloading files to the ESP8266 port
 of MP. It basically offers commands to list and upload/download files on the
 flash FS of the device.
 
-__Note__: At the time of writing, only text files (no binaries) are supported.
+__Note__: At the time of writing, only text files (no binaries) are supported. 
+Also this will not work with the current code from the Micropython repository,
+but only with the ALPHA v02 from the kickstarter.
+
 
 ## Requirements
 
