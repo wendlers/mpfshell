@@ -1,5 +1,5 @@
 #!/bin/bash
 
-PYTHONPATH=$PWD/mp:$PYTHONPATH
+PYTHONPATH=$PWD:$PYTHONPATH
 
-python mp/mpfshell.py
+python -m "mp.mpfshell"

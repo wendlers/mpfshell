@@ -1,4 +1,26 @@
-#!/usr/bin/env python
+##
+# The MIT License (MIT)
+#
+# Copyright (c) 2016 Stefan Wendler
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+##
 
 """
 2016-03-16, sw@kaltpost.de
@@ -11,7 +33,10 @@ For usage details see the README.md
 import cmd
 import os
 import sys
-import pyboard
+
+from mp.mpfexp import MpFileExplorer
+from mp.mpfexp import RemoteIOError
+from mp.pyboard import PyboardError
 
 
 class MpFileShell(cmd.Cmd):
@@ -22,7 +47,7 @@ class MpFileShell(cmd.Cmd):
     def __init__(self):
 
         cmd.Cmd.__init__(self)
-        self.pb = None
+        self.fe = None
 
     def __del__(self):
 
@@ -36,25 +61,22 @@ class MpFileShell(cmd.Cmd):
 
         try:
             self.__disconnect()
-            self.pb = pyboard.Pyboard(port)
-            self.pb.enter_raw_repl()
-            self.pb.exec_("import os, sys")
-        except pyboard.PyboardError:
-            self.__error("Error while executing command on device")
+            self.fe = MpFileExplorer(port)
+        except PyboardError as e:
+            self.__error(str(e))
 
     def __disconnect(self):
 
-        if self.pb is not None:
+        if self.fe is not None:
             try:
-                self.pb.exit_raw_repl()
-                self.pb.close()
-                self.pb = None
-            except pyboard.PyboardError:
-                self.__error("Error while executing command on device")
+                self.fe.close()
+                self.fe = None
+            except RemoteIOError as e:
+                self.__error(str(e))
 
     def __is_open(self):
 
-        if self.pb is None:
+        if self.fe is None:
             self.__error("Not connected to device. Use 'open' first.")
             return False
 
@@ -91,7 +113,7 @@ class MpFileShell(cmd.Cmd):
 
         if self.__is_open():
             try:
-                files = eval(self.pb.eval("os.listdir('')"))
+                files = self.fe.ls()
 
                 print("\nRemote files:\n")
 
@@ -100,8 +122,8 @@ class MpFileShell(cmd.Cmd):
 
                 print("")
 
-            except pyboard.PyboardError:
-                self.__error("Error while executing command on device")
+            except IOError as e:
+                self.__error(str(e))
 
     def do_lls(self, args):
         """lls
@@ -146,6 +168,7 @@ class MpFileShell(cmd.Cmd):
 
         if not len(args):
             self.__error("Missing arguments: <LOCAL FILE> [<REMOTE FILE>]")
+
         elif self.__is_open():
             s_args = args.split(" ")
 
@@ -157,31 +180,9 @@ class MpFileShell(cmd.Cmd):
                 rfile_name = lfile_name
 
             try:
-                lfile = open(lfile_name, "r")
-                lines = lfile.readlines()
-                lfile.close()
-
-                files = eval(self.pb.eval("os.listdir('')"))
-
-                if rfile_name in files:
-                    # remove the remote file first if it is already there
-                    self.pb.eval("os.remove('%s')" % rfile_name)
-
-                self.pb.exec_("f = open('%s', 'w')" % rfile_name)
-
-                for l in lines:
-                    sline = l.strip()
-
-                    if sline != "":
-                        # print("f.write('%s')" % l.encode("string-escape"))
-                        self.pb.exec_("f.write('%s')" % l.encode("string-escape"))
-
-                self.pb.exec_("f.close()")
-
-            except pyboard.PyboardError:
-                self.__error("Error while executing command on device")
+                self.fe.put(lfile_name, rfile_name)
             except IOError as e:
-                self.__error(str(e).split("] ")[-1])
+                self.__error(str(e))
 
     def do_get(self, args):
         """get <REMOTE FILE> [<LOCAL FILE>]
@@ -204,24 +205,9 @@ class MpFileShell(cmd.Cmd):
                 lfile_name = rfile_name
 
             try:
-                files = eval(self.pb.eval("os.listdir('')"))
-
-                if rfile_name not in files:
-                    self.__error("File not found on remote: %s " % args)
-                    return
-
-                lfile = open(lfile_name, "w")
-
-                self.pb.exec_("f = open('%s', 'r')" % rfile_name)
-                ret = self.pb.exec_("for l in f: sys.stdout.write(l),")
-
-                lfile.write(ret)
-                lfile.close()
-
-            except pyboard.PyboardError:
-                self.__error("Error while executing command on device")
+                self.fe.get(rfile_name, lfile_name)
             except IOError as e:
-                self.__error(str(e).split("] ")[-1])
+                self.__error(str(e))
 
     def do_rm(self, args):
         """rm <REMOTE FILE>
@@ -233,15 +219,9 @@ class MpFileShell(cmd.Cmd):
         elif self.__is_open():
 
             try:
-                files = eval(self.pb.eval("os.listdir('')"))
-
-                if args in files:
-                    self.pb.eval("os.remove('%s')" % args)
-                else:
-                    self.__error("File not found on remote: %s " % args)
-
-            except pyboard.PyboardError:
-                self.__error("Error while executing command on device")
+                self.fe.rm(args)
+            except IOError as e:
+                self.__error(str(e))
 
 
 if __name__ == '__main__':
