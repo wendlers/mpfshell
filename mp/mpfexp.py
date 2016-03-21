@@ -112,3 +112,34 @@ class MpFileExplorer(Pyboard):
 
         f.write(ret)
         f.close()
+
+    def gets(self, src):
+
+        if src not in self.ls():
+            raise RemoteIOError("No such file or directory: '%s'" % src)
+
+        try:
+            self.exec_("f = open('%s', 'r')" % src)
+            ret = self.exec_("for l in f: sys.stdout.write(l),")
+        except PyboardError:
+            raise RemoteIOError("Device communication failed")
+
+        return ret
+
+    def puts(self, dst, lines):
+
+        try:
+
+            self.exec_("f = open('%s', 'w')" % dst)
+
+            for l in lines:
+                self.exec_("f.write('%s')" % l.encode("string-escape"))
+
+            self.exec_("f.close()")
+
+        except PyboardError:
+            raise RemoteIOError("Device communication failed")
+
+    def size(self, target):
+
+        return len(self.gets(target))
