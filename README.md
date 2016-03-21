@@ -98,4 +98,5 @@ Commit only a single file (e.g. "boot.py"):
 
 
 __Note__: Changes not committed before un-mounting will be lost!
+
 __Note__: While mounted, the REPL is not accessible by terminal.
