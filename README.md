@@ -1,4 +1,4 @@
-# mpfshell/mpfmount
+# mpfshell / mpfmount
 2016-03-22, sw@kaltpost.de
 
 A simple shell based file explorer and FUSE based mounter for ESP8266 
