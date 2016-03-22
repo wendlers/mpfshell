@@ -82,7 +82,9 @@ __Note__: While in the shell, the REPL is not accessible by terminal.
 
 Mount device on port "/dev/ttyUSB0" to "$HOME/mp":
 
+    test -d $HOME/mp || mkdir $HOME/mp
     ./mpmount.sh -p /dev/ttyUSB0 -m $HOME/mp
+    cd $HOME/mp
       
 Now, work with the files as if they where normal files. When done
 editing, creating etc. commit your changes back to the MP board.
@@ -99,14 +101,14 @@ Or, as a short-cut for the above, jsut execute the ".commit" file:
 
     ./.commit
 
-__Note__: Changes not committed before un-mounting will be lost!
+__Note__: Changes are not committed before un-mounting will be lost!
 
-While the MP board is FUSE mounted, the serial line (to te REPL) is
+While the MP board is FUSE mounted, the serial line (to the REPL) is
 occupied. To overcome this problem, there is an other special file
 in the mounted FS called ".release". This file could be used to 
 make the FUSE mounter release the serial line to allow terminal access,
-and later on reattach the line (while the serial line is released,
-not commits to the MP board are possible).
+and later reattach the line (while the serial line is released,
+no commits to the MP board are possible).
  
 Relase the serial line, access REPL with terminal (miniterm.py from pyserial):
 
