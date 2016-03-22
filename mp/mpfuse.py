@@ -42,16 +42,46 @@ from fuse import FUSE, FuseOSError, Operations
 from mp.mpfexp import MpFileExplorer
 
 
-class MpFileEntry(object):
+class FileObject(object):
 
-    def __init__(self, mp, path, dirty=False, deleted=False, content=None):
-
-        self.mp = mp
+    def __init__(self, path, dirty=False, deleted=False, content=None):
 
         self._path = path
         self._dirty = dirty
         self._deleted = deleted
         self._content = content
+        self._ft = time.time()
+        self._mode = 0o666
+        self._uid = 0
+        self._gid = 0
+
+    def _set_ft(self, ft=None):
+
+        if ft is None:
+            ft = time.time()
+
+        self._ft = ft
+
+    def on_read(self, offset, length):
+        self._set_ft()
+        return self.content[offset:offset + length]
+
+    def on_write(self, offset, data):
+        pass
+
+    def on_truncate(self, length):
+        pass
+
+    def on_unlink(self):
+        pass
+
+    def on_getattr(self):
+
+        return dict(st_mode=(S_IFREG | self.mode), st_mtime=self.ft, st_atime=self.ft, st_ctime=self.ft,
+                    st_uid=self.uid, st_gid=self.gid, st_size=self.size)
+
+    def on_rename(self, new):
+        self._set_ft()
 
     @property
     def path(self):
@@ -63,10 +93,6 @@ class MpFileEntry(object):
 
     @property
     def content(self):
-
-        if self._content is None:
-            self._content = self.mp.gets(self._path)
-
         return self._content
 
     @content.setter
@@ -95,8 +121,171 @@ class MpFileEntry(object):
     def size(self):
         return len(self.content)
 
+    @property
+    def ft(self):
+        return self._ft
+
+    @ft.setter
+    def ft(self, value):
+        self._ft = value
+
+    @property
+    def mode(self):
+        return self._mode
+
+    @mode.setter
+    def mode(self, value):
+        self._mode = value
+
+    @property
+    def uid(self):
+        return self._uid
+
+    @uid.setter
+    def uid(self, value):
+        self._uid = value
+
+    @property
+    def gid(self):
+        return self._gid
+
+    @gid.setter
+    def gid(self, value):
+        self._gid = value
+
     def __str__(self):
-        return "MpFileEntry(path=%s, dirty=%s, deleted=%s)" % (self._path, self._dirty, self._deleted)
+        return "%s(path='%s', dirty=%s, deleted=%s, mode=%o)" % (self.__class__, self._path, self._dirty,
+                                                                 self._deleted, self._mode)
+
+
+class MpFileObject(FileObject):
+
+    def __init__(self, mp, mp_files, path, dirty=False, deleted=False, content=None):
+        FileObject.__init__(self, path, dirty, deleted, content)
+
+        self._mp = mp
+        self._mp_files = mp_files
+
+    def on_write(self, offset, data):
+        self._set_ft()
+        self.content = self.content[:offset] + data
+
+    def on_truncate(self, length):
+        self._set_ft()
+        self.content = self.content[0:length]
+
+    def on_unlink(self):
+        self._set_ft()
+        self.deleted = True
+
+    def on_rename(self, new):
+
+        self._set_ft()
+
+        self._mp_files[new] = copy.copy(self)
+        self._mp_files[new].dirty = True
+        self._mp_files[new].path = new
+
+        self.deleted = True
+
+    @property
+    def content(self):
+
+        if self._content is None:
+            self._content = self._mp.gets(self._path)
+
+        return self._content
+
+    @content.setter
+    def content(self, value):
+        self._content = value
+        self._dirty = True
+
+
+class RootFileObject(FileObject):
+
+    def __init__(self):
+        FileObject.__init__(self, "", False, False, "")
+
+        self._mode = 0o777
+
+    def on_getattr(self):
+
+        return dict(st_mode=(S_IFDIR | self.mode), st_mtime=self.ft, st_atime=self.ft, st_ctime=self.ft,
+                    st_uid=self.uid, st_gid=self.gid)
+
+
+class CommitFileObject(FileObject):
+
+    def __init__(self, mp, mp_files):
+        FileObject.__init__(self, ".commit", False, False, "")
+
+        self._mode = 0o777
+        self._mp = mp
+        self._mp_files = mp_files
+        self._content = "#!/bin/bash\n" \
+                        "echo \"*\" > .commit\n"
+
+    def on_write(self, offset, data):
+
+        # TODO do not try to commit when serial port is released
+
+        p = data.strip(' ').strip('\n').strip('\r')
+
+        if p == "*":
+            files = self._mp_files.keys()
+        elif p in self._mp_files:
+            files = [p]
+        else:
+            files = []
+
+        for p in files:
+
+            if not isinstance(self._mp_files[p], MpFileObject):
+                continue
+
+            if self._mp_files[p].deleted:
+
+                self._mp.rm(p)
+                del self._mp_files[p]
+
+            elif self._mp_files[p].dirty:
+
+                self._mp.puts(p, self._mp_files[p].content)
+                self._mp_files[p].dirty = False
+
+
+class ReleaseFileObject(FileObject):
+
+    def __init__(self, mp):
+        FileObject.__init__(self, ".release", False, False, "")
+
+        self._mode = 0o222
+        self._mp = mp
+
+    def on_write(self, offset, data):
+
+        p = data.strip(' ').strip('\n').strip('\r')
+
+        if p == "1":
+            self._mp.teardown()
+            self._mp.close()
+        else:
+            self._mp.open()
+            self._mp.setup()
+
+
+class TerminalFileObject(FileObject):
+
+    def __init__(self, mp):
+        FileObject.__init__(self, ".terminal", False, False, "")
+
+        self._mode = 0o777
+        self._mp = mp
+        self._content = "#!/bin/bash\n" \
+                        "echo \"1\" > .release\n" \
+                        "miniterm.py -p %s -b %d\n" \
+                        "echo \"0\" > .release\n" % (self._mp.port, self._mp.baudrate)
 
 
 class MpFuse(Operations):
@@ -109,42 +298,30 @@ class MpFuse(Operations):
         self.ft = time.time()
 
         self.mp = mp
-        self.cache = {}
+        self.cache = {"": RootFileObject()}
 
         for f in self.mp.ls():
-            self.cache[f] = MpFileEntry(self.mp, f)
+            self.cache[f] = MpFileObject(self.mp, self.cache, f)
+
+        self.cache[".commit"] = CommitFileObject(self.mp, self.cache)
+        self.cache[".release"] = ReleaseFileObject(self.mp)
+        self.cache[".terminal"] = TerminalFileObject(self.mp)
 
     def getattr(self, path, fh=None):
 
-        if path == '/':
-
-            return dict(st_mode=(S_IFDIR | 0o777), st_mtime=self.ft, st_atime=self.ft, st_ctime=self.ft,
-                        st_uid=self.uid, st_gid=self.gid)
-
-        elif path == '/.commit':
-
-            return dict(st_mode=(S_IFREG | 0o222), st_mtime=self.ft, st_atime=self.ft, st_ctime=self.ft,
-                        st_uid=self.uid, st_gid=self.gid, st_size=0)
-
-        else:
-            try:
-                p = path[1:].encode("ascii")
-                s = self.cache[p].size
-
-                return dict(st_mode=(S_IFREG | 0o666), st_mtime=self.ft, st_atime=self.ft, st_ctime=self.ft,
-                            st_uid=self.uid, st_gid=self.gid, st_size=s)
-            except:
-                raise FuseOSError(ENOENT)
+        try:
+            o = self.cache[path[1:].encode("ascii")]
+            return o.on_getattr()
+        except:
+            raise FuseOSError(ENOENT)
 
     def readdir(self, path, fh):
 
+        # this is a flat filesystem
         if path == '/':
-
             for f in self.cache.values():
-                if not f.deleted:
+                if not isinstance(f, RootFileObject) and not f.deleted:
                     yield f.path
-
-            yield ".commit"
 
     def open(self, path, flags):
 
@@ -157,7 +334,7 @@ class MpFuse(Operations):
             return -1
 
         p = path[1:].encode("ascii")
-        self.cache[p] = MpFileEntry(self.mp, p, content="", dirty=True)
+        self.cache[p] = MpFileObject(self.mp, self.cache, p, content="", dirty=True)
 
         self.fh += 1
         return self.fh
@@ -165,47 +342,16 @@ class MpFuse(Operations):
     def read(self, path, length, offset, fh):
 
         try:
-
-            p = path[1:].encode("ascii")
-            d = self.cache[p].content[offset:offset + length]
-            return ''.join(d)
-
-        except Exception as e:
+            o = self.cache[path[1:].encode("ascii")]
+            return o.on_read(offset, length)
+        except:
             raise FuseOSError(EIO)
 
     def write(self, path, buf, offset, fh):
 
         try:
-            if path == "/.commit":
-
-                p = buf.strip(' ').strip('\n').strip('\r')
-
-                if p == "*":
-                    files = self.cache.keys()
-                elif p in self.cache:
-                    files = [p]
-                else:
-                    files = []
-
-                for p in files:
-
-                    print("commit checking: %s" % self.cache[p])
-
-                    if self.cache[p].deleted:
-
-                        print("-> deleting: %s" % p)
-                        self.mp.rm(p)
-                        del self.cache[p]
-
-                    elif self.cache[p].dirty:
-
-                        print("-> updating: %s" % p)
-                        self.mp.puts(p, self.cache[p].content)
-                        self.cache[p].dirty = False
-
-            else:
-                p = path[1:].encode("ascii")
-                self.cache[p].content = self.cache[p].content[:offset] + buf
+            o = self.cache[path[1:].encode("ascii")]
+            o.on_write(offset, buf)
         except:
             raise FuseOSError(EIO)
 
@@ -213,39 +359,30 @@ class MpFuse(Operations):
 
     def unlink(self, path):
 
-        p = path[1:].encode("ascii")
-        self.cache[p].deleted = True
+        try:
+            o = self.cache[path[1:].encode("ascii")]
+            return o.on_unlink()
+        except:
+            raise FuseOSError(EIO)
 
     def rename(self, old, new):
 
+        # this is a flat filesystem
         if '/' in new[1:]:
             raise FuseOSError(EIO)
 
         try:
-
-            po = old[1:].encode("ascii")
-            pn = new[1:].encode("ascii")
-
-            self.cache[pn] = copy.copy(self.cache[po])
-            self.cache[pn].dirty = True
-            self.cache[pn].path = pn
-
-            self.cache[po].deleted = True
-
+            o = self.cache[old[1:].encode("ascii")]
+            o.on_rename(new[1:].encode("ascii"))
         except Exception as e:
             raise FuseOSError(EIO)
 
     def truncate(self, path, length, fh=None):
 
-        if path == "/.commit":
-            return
-
         try:
-
-            p = path[1:].encode("ascii")
-            self.cache[p].content = self.cache[p].content[0:length]
-
-        except Exception as e:
+            o = self.cache[path[1:].encode("ascii")]
+            o.on_truncate(length)
+        except:
             raise FuseOSError(EIO)
 
 
@@ -274,4 +411,4 @@ if __name__ == '__main__':
     print("Mounting mpfs from device on port %s to %s" % (options.port, options.mount))
     print("Press CTRL+C to quit")
 
-    FUSE(MpFuse(MpFileExplorer(device=options.port), options.uid, options.gid), options.mount, foreground=True)
+    FUSE(MpFuse(MpFileExplorer(port=options.port), options.uid, options.gid), options.mount, foreground=True)

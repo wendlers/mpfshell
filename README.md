@@ -1,5 +1,5 @@
 # mpfshell
-2016-03-16, sw@kaltpost.de
+2016-03-22, sw@kaltpost.de
 
 A simple shell based file explorer and FUSE based mounter for ESP8266 
 [Micropython](https://github.com/micropython/micropython) based devices.
@@ -10,7 +10,7 @@ flash FS of the device.
 
 The FUSE integration allows to mount a ESP8266 based Micropython device into
 the file system. It currently offers basic operations like read, write, delete
-and rename.
+and rename, as well as some special functions (all provided tough the filesystem).
 
 __Note__: At the time of writing, only text files (no binaries) are supported. 
 Also this will not work with the current code from the Micropython repository,
@@ -25,10 +25,9 @@ but only with the ALPHA v02 from the kickstarter.
 * The [pyboard.py] (https://github.com/micropython/micropython/tree/master/tools) tool from the 
   Micropython repository needs to be in the python path (for convenience, this file is included here too)
   
-  
-## Shell Usage
+__Note__: The tools only work if the REPL is accessible on the device!
 
-__Note__: The tool only works if the REPL is accessible on the device!
+## Shell Usage
 
 Start the shell with:
 
@@ -87,15 +86,39 @@ Mount device on port "/dev/ttyUSB0" to "$HOME/mp":
       
 Now, work with the files as if they where normal files. When done
 editing, creating etc. commit your changes back to the MP board.
-
-Commit all changes:
-
-    echo "*" > $HOME/mp/.commit
     
-Commit only a single file (e.g. "boot.py"):
+Commit a single file (e.g. "boot.py"):
 
     echo "boot.py" > $HOME/mnt/.commit
 
+Commit all changed files:
+
+    echo "*" > $HOME/mp/.commit
+
+Or, as a short-cut for the above, jsut execute the ".commit" file:
+
+    ./.commit
 
 __Note__: Changes not committed before un-mounting will be lost!
-__Note__: While mounted, the REPL is not accessible by terminal.
+
+While the MP board is FUSE mounted, the serial line (to te REPL) is
+occupied. To overcome this problem, there is an other special file
+in the mounted FS called ".release". This file could be used to 
+make the FUSE mounter release the serial line to allow terminal access,
+and later on reattach the line (while the serial line is released,
+not commits to the MP board are possible).
+ 
+Relase the serial line, access REPL with terminal (miniterm.py from pyserial):
+
+    echo "1" > .release
+    miniterm.py -p /dev/ttyUSB0 -b 115200
+
+When done with the terminal, reattach the serial line:
+
+    echo "0" > .release
+
+For the above three commands, there is an other shortcut called ".terminal".
+If executed, it will release the serial line, connect miniterm to the REPL, and
+when minierm is ended by the user reattaches the serial line:
+
+    ./.terminal

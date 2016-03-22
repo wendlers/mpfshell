@@ -32,11 +32,10 @@ class RemoteIOError(IOError):
 
 class MpFileExplorer(Pyboard):
 
-    def __init__(self, device, baudrate=115200, user='micro', password='python', wait=0):
-        Pyboard.__init__(self, device, baudrate, user, password, wait)
+    def __init__(self, port, baudrate=115200):
+        Pyboard.__init__(self, port, baudrate)
 
-        self.enter_raw_repl()
-        self.exec_("import os, sys")
+        self.setup()
 
     def __del__(self):
 
@@ -49,6 +48,14 @@ class MpFileExplorer(Pyboard):
             self.close()
         except:
             pass
+
+    def teardown(self):
+        self.exit_raw_repl()
+
+    def setup(self):
+
+        self.enter_raw_repl()
+        self.exec_("import os, sys")
 
     def ls(self):
 
