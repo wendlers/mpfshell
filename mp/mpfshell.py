@@ -63,7 +63,7 @@ class MpFileShell(cmd.Cmd):
             self.__disconnect()
             self.fe = MpFileExplorer(port)
         except PyboardError as e:
-            self.__error(str(e))
+            self.__error(str(e[-1]))
 
     def __disconnect(self):
 
@@ -222,6 +222,44 @@ class MpFileShell(cmd.Cmd):
                 self.fe.rm(args)
             except IOError as e:
                 self.__error(str(e))
+
+    def do_cat(self, args):
+        """cat <REMOTE FILE>
+        Print the contents of a remote file.
+        """
+
+        if not len(args):
+            self.__error("Missing argument: <REMOTE FILE>")
+        elif self.__is_open():
+
+            try:
+                print(self.fe.gets(args))
+            except IOError as e:
+                self.__error(str(e))
+
+    def do_exec(self, args):
+        """exec <STATEMENT>
+        Execute a Python statement on remote.
+        """
+
+        def data_consumer(data):
+            sys.stdout.write(data.strip("\x04"))
+
+        if not len(args):
+            self.__error("Missing argument: <REMOTE FILE>")
+        elif self.__is_open():
+
+            try:
+                self.fe.exec_raw_no_follow(args + "\n")
+                ret = self.fe.follow(None, data_consumer)
+
+                if len(ret[-1]):
+                    self.__error(ret[-1])
+
+            except IOError as e:
+                self.__error(str(e))
+            except PyboardError as e:
+                self.__error(str(e[-1]))
 
 
 if __name__ == '__main__':
