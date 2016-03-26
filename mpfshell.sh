@@ -2,4 +2,4 @@
 
 PYTHONPATH=$PWD:$PYTHONPATH
 
-python -m "mp.mpfshell"
+python -m "mp.mpfshell" $@

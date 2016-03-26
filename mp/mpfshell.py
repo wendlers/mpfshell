@@ -30,11 +30,14 @@ Simple file shell for Micropython.
 For usage details see the README.md
 """
 
+import io
 import cmd
 import os
 import sys
+import argparse
+import colorama
 
-from serial.tools.miniterm import Miniterm, console, CONVERT_CRLF, NEWLINE_CONVERISON_MAP, EXITCHARCTER, MENUCHARACTER
+from serial.tools.miniterm import Miniterm, console, CONVERT_CRLF, NEWLINE_CONVERISON_MAP
 from mp.mpfexp import MpFileExplorer
 from mp.mpfexp import RemoteIOError
 from mp.pyboard import PyboardError
@@ -56,8 +59,11 @@ class MpTerminal(Miniterm):
 
 class MpFileShell(cmd.Cmd):
 
-    intro = '\n** Micropython File Shell v0.1, 2016 sw@kaltpost.de **\n'
-    prompt = 'mpfs> '
+    intro = '\n' + colorama.Fore.GREEN + \
+            '** Micropython File Shell v0.1, 2016 sw@kaltpost.de ** ' + \
+            colorama.Fore.RESET + '\n'
+
+    prompt = colorama.Fore.BLUE + 'mpfs> ' + colorama.Fore.RESET
 
     def __init__(self):
 
@@ -70,7 +76,8 @@ class MpFileShell(cmd.Cmd):
 
     def __error(self, msg):
 
-        sys.stderr.write("\n" + msg + "\n\n")
+        print('\n' + colorama.Fore.RED + msg + colorama.Fore.RESET + '\n')
+        # sys.stderr.write("\n" + msg + "\n\n")
 
     def __connect(self, port):
 
@@ -103,6 +110,8 @@ class MpFileShell(cmd.Cmd):
         """
 
         return True
+
+    do_EOF = do_exit
 
     def do_open(self, args):
         """open <PORT>
@@ -302,7 +311,55 @@ class MpFileShell(cmd.Cmd):
             print("")
 
 
-if __name__ == '__main__':
+def main():
+
+    colorama.init()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--command", help="execute given commands (separated by ;)", default=None, nargs="*")
+    parser.add_argument("-s", "--script", help="execute commands from file", default=None)
+    parser.add_argument("-n", "--noninteractive", help="non interactive mode (don't enter shell)",
+                        action="store_true", default=False)
+
+    args = parser.parse_args()
 
     mpfs = MpFileShell()
-    mpfs.cmdloop()
+
+    if args.command is not None:
+
+        for cmd in ' '.join(args.command).split(';'):
+            scmd = cmd.strip()
+            if len(scmd) > 0 and not scmd.startswith('#'):
+                mpfs.onecmd(scmd)
+
+    elif args.script is not None:
+
+        f = open(args.script, 'r')
+        script = ""
+
+        for line in f:
+
+            sline = line.strip()
+
+            if len(sline) > 0 and not sline.startswith('#'):
+                script += sline + '\n'
+
+        sys.stdin = io.StringIO(unicode(script))
+        mpfs.intro = ''
+        mpfs.prompt = ''
+
+    if not args.noninteractive:
+
+        try:
+            mpfs.cmdloop()
+        except KeyboardInterrupt:
+            print("")
+
+
+if __name__ == '__main__':
+
+    try:
+        main()
+    except Exception as e:
+        sys.stderr.write(str(e) + "\n")
+        exit(1)
