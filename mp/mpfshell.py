@@ -34,9 +34,24 @@ import cmd
 import os
 import sys
 
+from serial.tools.miniterm import Miniterm, console, CONVERT_CRLF, NEWLINE_CONVERISON_MAP, EXITCHARCTER, MENUCHARACTER
 from mp.mpfexp import MpFileExplorer
 from mp.mpfexp import RemoteIOError
 from mp.pyboard import PyboardError
+
+
+class MpTerminal(Miniterm):
+
+    def __init__(self, serial):
+
+        self.serial = serial
+        self.echo = False
+        self.repr_mode = 0
+        self.convert_outgoing = CONVERT_CRLF
+        self.newline = NEWLINE_CONVERISON_MAP[self.convert_outgoing]
+        self.dtr_state = True
+        self.rts_state = True
+        self.break_state = False
 
 
 class MpFileShell(cmd.Cmd):
@@ -246,7 +261,7 @@ class MpFileShell(cmd.Cmd):
             sys.stdout.write(data.strip("\x04"))
 
         if not len(args):
-            self.__error("Missing argument: <REMOTE FILE>")
+            self.__error("Missing argument: <STATEMENT>")
         elif self.__is_open():
 
             try:
@@ -261,7 +276,33 @@ class MpFileShell(cmd.Cmd):
             except PyboardError as e:
                 self.__error(str(e[-1]))
 
+    def do_repl(self, args):
+        """repl
+        Enter Micropython REPL.
+        """
+
+        if self.__is_open():
+
+            miniterm = MpTerminal(self.fe.serial)
+
+            self.fe.teardown()
+
+            console.setup()
+            miniterm.start()
+
+            print("\n*** Exit REPL with Ctrl+] ***")
+
+            try:
+                miniterm.join(True)
+            except KeyboardInterrupt:
+                pass
+
+            console.cleanup()
+            self.fe.setup()
+            print("")
+
 
 if __name__ == '__main__':
+
     mpfs = MpFileShell()
     mpfs.cmdloop()
