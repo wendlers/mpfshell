@@ -27,11 +27,17 @@ but only with the ALPHA v02 from the kickstarter.
   
 __Note__: The tools only work if the REPL is accessible on the device!
 
+## Installing
+
+To install this tool execute the following:
+
+    sudo python setup.py install
+    
 ## Shell Usage
 
 Start the shell with:
 
-    ./mpfshell.sh
+    mpfshell
 
 At the shell prompt, first connect to the device:
 
@@ -69,13 +75,40 @@ To navigate on the local filesystem, use:
 
     lls, lcd lpwd
 
+Enter REPL:
+
+    repl
+    
+To exit REPL and return to the file shell use Ctrl+Alt+] 
+
 For a full list of commands use:
 
     mpfs> help
     mpfs> help <command>
 
+The shell is also scriptable.
 
-__Note__: While in the shell, the REPL is not accessible by terminal.
+E.g. to execute a command, and then enter the shell:
+
+    mpfshell -c "open /dev/ttyUSB0"
+    
+Or to copy the file "boot.py" to the device, and don't enter the shell at all:
+
+    mpfshell -n -c "open /dev/ttyUSB0; put boot.py"
+
+It is also possible to put a bunch of shell commands in a file, and then execute
+them from that file.
+ 
+E.g. creating a file called "myscript.mpf":
+
+    open /dev/ttyUSB0 
+    put boot.py
+    put main.py
+    ls
+    
+And execute it with:
+
+    mpfshell -s myscript.mpf    
 
 
 ## FUSE Mount Usage
@@ -83,7 +116,7 @@ __Note__: While in the shell, the REPL is not accessible by terminal.
 Mount device on port "/dev/ttyUSB0" to "$HOME/mp":
 
     test -d $HOME/mp || mkdir $HOME/mp
-    ./mpmount.sh -p /dev/ttyUSB0 -m $HOME/mp
+    mpmount -p /dev/ttyUSB0 -m $HOME/mp
     cd $HOME/mp
       
 Now, work with the files as if they where normal files. When done
