@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 ##
 
+import os
+
 from mp.pyboard import Pyboard
 from mp.pyboard import PyboardError
 
@@ -34,6 +36,8 @@ class MpFileExplorer(Pyboard):
 
     def __init__(self, port, baudrate=115200):
         Pyboard.__init__(self, port, baudrate)
+
+        self.dir = ""
 
         self.setup()
 
@@ -49,6 +53,15 @@ class MpFileExplorer(Pyboard):
         except:
             pass
 
+    def __fqn(self, name):
+
+        if self.dir.endswith("/"):
+            fqn = self.dir + name
+        else:
+            fqn = self.dir + "/" + name
+
+        return fqn
+
     def teardown(self):
         self.exit_raw_repl()
 
@@ -59,8 +72,18 @@ class MpFileExplorer(Pyboard):
 
     def ls(self):
 
+        files = []
+
         try:
-            files = eval(self.eval("os.listdir('')"))
+
+            res = self.eval("os.listdir('%s')" % self.dir)
+            lines = res.split("\r\n")
+
+            for l in lines:
+                if l.startswith("["):
+                    files = eval(l)
+                    break
+
         except PyboardError:
             raise RemoteIOError("Device communication failed")
 
@@ -69,10 +92,10 @@ class MpFileExplorer(Pyboard):
     def rm(self, target):
 
         if target not in self.ls():
-            raise RemoteIOError("No such file or directory: '%s'" % target)
+            raise RemoteIOError("No such file or directory: '%s'" % self.__fqn(target))
 
         try:
-            self.eval("os.remove('%s')" % target)
+            self.eval("os.remove('%s')" % self.__fqn(target))
         except PyboardError:
             raise RemoteIOError("Device communication failed")
 
@@ -89,7 +112,7 @@ class MpFileExplorer(Pyboard):
 
         try:
 
-            self.exec_("f = open('%s', 'w')" % dst)
+            self.exec_("f = open('%s', 'w')" % self.__fqn(dst))
 
             for l in lines:
                 self.exec_("f.write('%s')" % l.encode("string-escape"))
@@ -104,7 +127,7 @@ class MpFileExplorer(Pyboard):
         assert not binary, "Binary mode not implemented"
 
         if src not in self.ls():
-            raise RemoteIOError("No such file or directory: '%s'" % src)
+            raise RemoteIOError("No such file or directory: '%s'" % self.__fqn(src))
 
         if dst is None:
             dst = src
@@ -112,7 +135,7 @@ class MpFileExplorer(Pyboard):
         f = open(dst, "w")
 
         try:
-            self.exec_("f = open('%s', 'r')" % src)
+            self.exec_("f = open('%s', 'r')" % self.__fqn(src))
             ret = self.exec_("for l in f: sys.stdout.write(l),")
         except PyboardError:
             raise RemoteIOError("Device communication failed")
@@ -123,10 +146,10 @@ class MpFileExplorer(Pyboard):
     def gets(self, src):
 
         if src not in self.ls():
-            raise RemoteIOError("No such file or directory: '%s'" % src)
+            raise RemoteIOError("No such file or directory: '%s'" % self.__fqn(src))
 
         try:
-            self.exec_("f = open('%s', 'r')" % src)
+            self.exec_("f = open('%s', 'r')" % self.__fqn(src))
             ret = self.exec_("for l in f: sys.stdout.write(l),")
         except PyboardError:
             raise RemoteIOError("Device communication failed")
@@ -137,7 +160,7 @@ class MpFileExplorer(Pyboard):
 
         try:
 
-            self.exec_("f = open('%s', 'w')" % dst)
+            self.exec_("f = open('%s', 'w')" % self.__fqn(dst))
 
             for l in lines:
                 self.exec_("f.write('%s')" % l.encode("string-escape"))
@@ -150,3 +173,26 @@ class MpFileExplorer(Pyboard):
     def size(self, target):
 
         return len(self.gets(target))
+
+    def cd(self, dir):
+
+        if dir.startswith("/"):
+            self.dir = dir
+        elif dir == "..":
+            self.dir, _ = os.path.split(self.dir)
+        else:
+            self.dir = self.__fqn(dir)
+
+    def pwd(self):
+
+        return self.dir
+
+    def md(self, dir):
+
+        if dir in self.ls():
+            raise RemoteIOError("File or directory already exists: '%s'" % self.__fqn(dir))
+
+        try:
+            self.eval("os.mkdir('%s')" % self.__fqn(dir))
+        except PyboardError:
+            raise RemoteIOError("Device communication failed")

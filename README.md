@@ -12,16 +12,13 @@ The FUSE integration allows to mount a ESP8266 based Micropython device into
 the file system. It currently offers basic operations like read, write, delete
 and rename, as well as some special functions (all provided tough the filesystem).
 
-__Note__: At the time of writing, only text files (no binaries) are supported. 
-Also this will not work with the current code from the Micropython repository,
-but only with the ALPHA v02 from the kickstarter.
-
-
 ## Requirements
 
-* ESP8266 board running Micropython (at least mp-esp8266-firmware-v02.bin from the kickstarter)
+* Python 2.7
+* ESP8266 board running latest [Micropython](https://github.com/micropython/micropython)
 * OS supporting fuse (Linux, Mac OS)
 * The fusepy library (sudo pip install fusepy)
+* The colorama library (sudo pip install colorama)
 * The [pyboard.py] (https://github.com/micropython/micropython/tree/master/tools) tool from the 
   Micropython repository needs to be in the python path (for convenience, this file is included here too)
   
@@ -31,6 +28,8 @@ __Note__: The tools only work if the REPL is accessible on the device!
 
 To install this tool execute the following:
 
+    sudo pip install fusepy
+    sudo pip install colorama
     sudo python setup.py install
     
 ## Shell Usage
@@ -67,9 +66,29 @@ Using a different local file name:
 
     mpfs> get boot.py my_boot.py
 
-To remove a file on the device use:
+To remove a file (or directory) on the device use:
 
     mpfs> rm boot.py
+
+To create a new remote directory:
+
+    mpfs> md test
+
+To navigate remote directories:
+
+    mpfs> cd test
+    mpfs> cd ..
+    mpfs> cd /some/full/path
+    
+See which is the curren remote directory:
+
+    mpfs> pwd
+
+Remove a remote directory:
+
+    mpfs> rm test
+    
+__Note__: The directory to delete needs to be empty!
 
 To navigate on the local filesystem, use:
 
@@ -110,13 +129,12 @@ And execute it with:
 
     mpfshell -s myscript.mpf    
 
-
 ## FUSE Mount Usage
 
 Mount device on port "/dev/ttyUSB0" to "$HOME/mp":
 
     test -d $HOME/mp || mkdir $HOME/mp
-    mpmount -p /dev/ttyUSB0 -m $HOME/mp
+    mpfmount -p /dev/ttyUSB0 -m $HOME/mp
     cd $HOME/mp
       
 Now, work with the files as if they where normal files. When done

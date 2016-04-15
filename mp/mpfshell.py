@@ -60,10 +60,12 @@ class MpTerminal(Miniterm):
 class MpFileShell(cmd.Cmd):
 
     intro = '\n' + colorama.Fore.GREEN + \
-            '** Micropython File Shell v0.1, 2016 sw@kaltpost.de ** ' + \
+            '** Micropython File Shell v0.2, 2016 sw@kaltpost.de ** ' + \
             colorama.Fore.RESET + '\n'
 
-    prompt = colorama.Fore.BLUE + 'mpfs> ' + colorama.Fore.RESET
+    prompt = colorama.Fore.BLUE + "mpfs [" + \
+             colorama.Fore.YELLOW + "/" + \
+             colorama.Fore.BLUE + "]> " + colorama.Fore.RESET
 
     def __init__(self):
 
@@ -73,6 +75,12 @@ class MpFileShell(cmd.Cmd):
     def __del__(self):
 
         self.__disconnect()
+
+    def __set_prompt_path(self):
+
+        self.prompt = colorama.Fore.BLUE + "mpfs [" + \
+                      colorama.Fore.YELLOW + self.fe.pwd() + \
+                      colorama.Fore.BLUE + "]> " + colorama.Fore.RESET
 
     def __error(self, msg):
 
@@ -139,13 +147,45 @@ class MpFileShell(cmd.Cmd):
             try:
                 files = self.fe.ls()
 
-                print("\nRemote files:\n")
+                print("\nRemote files in '%s':\n" % self.fe.pwd())
 
                 for f in files:
                     print(" %s" % f)
 
                 print("")
 
+            except IOError as e:
+                self.__error(str(e))
+
+    def do_pwd(self, args):
+        """pwd
+         Print current remote directory.
+         """
+
+        print(self.fe.pwd())
+
+    def do_cd(self, args):
+        """cd <TARGET DIR>
+        Change current remote directory to given target.
+        """
+        if not len(args):
+            self.__error("Missing argument: <REMOTE DIR>")
+        elif self.__is_open():
+            try:
+                self.fe.cd(args)
+                self.__set_prompt_path()
+            except IOError as e:
+                self.__error(str(e))
+
+    def do_md(self, args):
+        """md <TARGET DIR>
+        Create new remote directory.
+        """
+        if not len(args):
+            self.__error("Missing argument: <REMOTE DIR>")
+        elif self.__is_open():
+            try:
+                self.fe.md(args)
             except IOError as e:
                 self.__error(str(e))
 
@@ -234,8 +274,10 @@ class MpFileShell(cmd.Cmd):
                 self.__error(str(e))
 
     def do_rm(self, args):
-        """rm <REMOTE FILE>
-        Delete a remote file.
+        """rm <REMOTE FILE or DIR>
+        Delete a remote file or directory.
+
+        Note: only empty directories could be removed.
         """
 
         if not len(args):
@@ -358,8 +400,11 @@ def main():
 
 if __name__ == '__main__':
 
+    main()
+    '''
     try:
         main()
     except Exception as e:
         sys.stderr.write(str(e) + "\n")
         exit(1)
+    '''
