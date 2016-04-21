@@ -70,19 +70,35 @@ class MpFileExplorer(Pyboard):
         self.enter_raw_repl()
         self.exec_("import os, sys")
 
-    def ls(self):
+    def ls(self, add_files=True, add_dirs=True, add_details=False):
 
         files = []
 
         try:
 
             res = self.eval("os.listdir('%s')" % self.dir)
-            lines = res.split("\r\n")
+            tmp = eval(res)
 
-            for l in lines:
-                if l.startswith("["):
-                    files = eval(l)
-                    break
+            if add_dirs:
+                for f in tmp:
+                    try:
+                        self.eval("os.listdir('%s/%s')" % (self.dir, f))
+                        if add_details:
+                            files.append((f, 'D'))
+                        else:
+                            files.append(f)
+                    except PyboardError:
+                        pass
+
+            if add_files:
+                for f in tmp:
+                    try:
+                        self.eval("os.listdir('%s/%s')" % (self.dir, f))
+                    except PyboardError:
+                        if add_details:
+                            files.append((f, 'F'))
+                        else:
+                            files.append(f)
 
         except PyboardError:
             raise RemoteIOError("Device communication failed")

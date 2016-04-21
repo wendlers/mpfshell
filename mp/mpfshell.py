@@ -145,12 +145,15 @@ class MpFileShell(cmd.Cmd):
 
         if self.__is_open():
             try:
-                files = self.fe.ls()
+                files = self.fe.ls(add_details=True)
 
                 print("\nRemote files in '%s':\n" % self.fe.pwd())
 
-                for f in files:
-                    print(" %s" % f)
+                for elem, type in files:
+                    if type == 'F':
+                        print(colorama.Fore.CYAN + (" [%s] %s" % (type, elem)) + colorama.Fore.RESET)
+                    else:
+                        print(colorama.Fore.MAGENTA + (" [%s] %s" % (type, elem)) + colorama.Fore.RESET)
 
                 print("")
 
@@ -176,6 +179,15 @@ class MpFileShell(cmd.Cmd):
                 self.__set_prompt_path()
             except IOError as e:
                 self.__error(str(e))
+
+    def complete_cd(self, *args):
+
+        try:
+            files = self.fe.ls(add_files=False)
+        except Exception:
+            files = []
+
+        return [i for i in files if i.startswith(args[0])]
 
     def do_md(self, args):
         """md <TARGET DIR>
@@ -216,6 +228,10 @@ class MpFileShell(cmd.Cmd):
             except OSError as e:
                 self.__error(str(e).split("] ")[-1])
 
+    def complete_lcd(self, *args):
+        dirs = [o for o in os.listdir(".") if os.path.isdir(os.path.join(".", o))]
+        return [i for i in dirs if i.startswith(args[0])]
+
     def do_lpwd(self, args):
         """lpwd
         Print current local directory.
@@ -248,6 +264,10 @@ class MpFileShell(cmd.Cmd):
             except IOError as e:
                 self.__error(str(e))
 
+    def complete_put(self, *args):
+        files = [o for o in os.listdir(".") if os.path.isfile(os.path.join(".", o))]
+        return [i for i in files if i.startswith(args[0])]
+
     def do_get(self, args):
         """get <REMOTE FILE> [<LOCAL FILE>]
         Download remote file. If the second parameter is given,
@@ -273,6 +293,15 @@ class MpFileShell(cmd.Cmd):
             except IOError as e:
                 self.__error(str(e))
 
+    def complete_get(self, *args):
+
+        try:
+            files = self.fe.ls(add_dirs=False)
+        except Exception:
+            files = []
+
+        return [i for i in files if i.startswith(args[0])]
+
     def do_rm(self, args):
         """rm <REMOTE FILE or DIR>
         Delete a remote file or directory.
@@ -289,6 +318,15 @@ class MpFileShell(cmd.Cmd):
             except IOError as e:
                 self.__error(str(e))
 
+    def complete_rm(self, *args):
+
+        try:
+            files = self.fe.ls()
+        except Exception:
+            files = []
+
+        return [i for i in files if i.startswith(args[0])]
+
     def do_cat(self, args):
         """cat <REMOTE FILE>
         Print the contents of a remote file.
@@ -302,6 +340,8 @@ class MpFileShell(cmd.Cmd):
                 print(self.fe.gets(args))
             except IOError as e:
                 self.__error(str(e))
+
+    complete_cat = complete_get
 
     def do_exec(self, args):
         """exec <STATEMENT>
