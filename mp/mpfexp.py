@@ -23,6 +23,7 @@
 ##
 
 import os
+import re
 
 from mp.pyboard import Pyboard
 from mp.pyboard import PyboardError
@@ -37,7 +38,7 @@ class MpFileExplorer(Pyboard):
     def __init__(self, port, baudrate=115200):
         Pyboard.__init__(self, port, baudrate)
 
-        self.dir = ""
+        self.dir = "/"
 
         self.setup()
 
@@ -115,6 +116,18 @@ class MpFileExplorer(Pyboard):
         except PyboardError:
             raise RemoteIOError("Device communication failed")
 
+    def mrm(self, pat, verbose=False):
+
+        files = self.ls(add_dirs=False)
+        find = re.compile(pat)
+
+        for f in files:
+            if find.match(f):
+                if verbose:
+                    print(" * rm %s" % f)
+
+                self.rm(f)
+
     def put(self, src, dst=None, binary=False):
 
         assert not binary, "Binary mode not implemented"
@@ -138,6 +151,20 @@ class MpFileExplorer(Pyboard):
         except PyboardError:
             raise RemoteIOError("Device communication failed")
 
+    def mput(self, src_dir, pat, verbose=False, binary=False):
+
+        assert not binary, "Binary mode not implemented"
+
+        find = re.compile(pat)
+        files = os.listdir(src_dir)
+
+        for f in files:
+            if os.path.isfile(f) and find.match(f):
+                if verbose:
+                    print(" * put %s" % f)
+
+                self.put(os.path.join(src_dir, f), f, binary=binary)
+
     def get(self, src, dst=None, binary=False):
 
         assert not binary, "Binary mode not implemented"
@@ -158,6 +185,20 @@ class MpFileExplorer(Pyboard):
 
         f.write(ret)
         f.close()
+
+    def mget(self, dst_dir, pat, verbose=False, binary=False):
+
+        assert not binary, "Binary mode not implemented"
+
+        files = self.ls(add_dirs=False)
+        find = re.compile(pat)
+
+        for f in files:
+            if find.match(f):
+                if verbose:
+                    print(" * get %s" % f)
+
+                self.get(f, dst=os.path.join(dst_dir, f), binary=binary)
 
     def gets(self, src):
 

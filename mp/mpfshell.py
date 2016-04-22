@@ -36,8 +36,10 @@ import os
 import sys
 import argparse
 import colorama
+import glob
 
 from serial.tools.miniterm import Miniterm, console, CONVERT_CRLF, NEWLINE_CONVERISON_MAP
+
 from mp.mpfexp import MpFileExplorer
 from mp.mpfexp import RemoteIOError
 from mp.pyboard import PyboardError
@@ -60,7 +62,7 @@ class MpTerminal(Miniterm):
 class MpFileShell(cmd.Cmd):
 
     intro = '\n' + colorama.Fore.GREEN + \
-            '** Micropython File Shell v0.2, 2016 sw@kaltpost.de ** ' + \
+            '** Micropython File Shell v0.3, 2016 sw@kaltpost.de ** ' + \
             colorama.Fore.RESET + '\n'
 
     prompt = colorama.Fore.BLUE + "mpfs [" + \
@@ -94,6 +96,8 @@ class MpFileShell(cmd.Cmd):
             self.fe = MpFileExplorer(port)
         except PyboardError as e:
             self.__error(str(e[-1]))
+        except AttributeError:
+            self.__error("Failed to open: %s" % port)
 
     def __disconnect(self):
 
@@ -129,7 +133,14 @@ class MpFileShell(cmd.Cmd):
         if not len(args):
             self.__error("Missing argument: <PORT>")
         else:
+            if not args.startswith("/dev/"):
+                args = "/dev/" + args
+
             self.__connect(args)
+
+    def complete_open(self, *args):
+        ports = glob.glob('/dev/ttyUSB*') + glob.glob('/dev/ttyACM*')
+        return [i[5:] for i in ports if i[5:].startswith(args[0])]
 
     def do_close(self, args):
         """close
@@ -147,13 +158,16 @@ class MpFileShell(cmd.Cmd):
             try:
                 files = self.fe.ls(add_details=True)
 
+                if self.fe.pwd() != "/":
+                    files = [("..", "D")] + files
+
                 print("\nRemote files in '%s':\n" % self.fe.pwd())
 
                 for elem, type in files:
                     if type == 'F':
-                        print(colorama.Fore.CYAN + (" [%s] %s" % (type, elem)) + colorama.Fore.RESET)
+                        print(colorama.Fore.CYAN + ("       %s" % elem) + colorama.Fore.RESET)
                     else:
-                        print(colorama.Fore.MAGENTA + (" [%s] %s" % (type, elem)) + colorama.Fore.RESET)
+                        print(colorama.Fore.MAGENTA + (" <dir> %s" % elem) + colorama.Fore.RESET)
 
                 print("")
 
@@ -211,7 +225,12 @@ class MpFileShell(cmd.Cmd):
         print("\nLocal files:\n")
 
         for f in files:
-            print(" %s" % f)
+            if os.path.isdir(f):
+                print(colorama.Fore.MAGENTA + (" <dir> %s" % f) + colorama.Fore.RESET)
+
+        for f in files:
+            if os.path.isfile(f):
+                print(colorama.Fore.CYAN + ("       %s" % f) + colorama.Fore.RESET)
 
         print("")
 
@@ -268,6 +287,24 @@ class MpFileShell(cmd.Cmd):
         files = [o for o in os.listdir(".") if os.path.isfile(os.path.join(".", o))]
         return [i for i in files if i.startswith(args[0])]
 
+    def do_mput(self, args):
+        """mput <SELECTION REGEX>
+        Upload all local files that match the given regular expression.
+        The remote files will be named the same as the local files.
+
+        "mput" does not get directories, and it is note recursive.
+        """
+
+        if not len(args):
+            self.__error("Missing argument: <SELECTION REGEX>")
+
+        elif self.__is_open():
+
+            try:
+                self.fe.mput(os.getcwd(), args, True)
+            except IOError as e:
+                self.__error(str(e))
+
     def do_get(self, args):
         """get <REMOTE FILE> [<LOCAL FILE>]
         Download remote file. If the second parameter is given,
@@ -277,6 +314,7 @@ class MpFileShell(cmd.Cmd):
 
         if not len(args):
             self.__error("Missing arguments: <REMOTE FILE> [<LOCAL FILE>]")
+
         elif self.__is_open():
 
             s_args = args.split(" ")
@@ -290,6 +328,24 @@ class MpFileShell(cmd.Cmd):
 
             try:
                 self.fe.get(rfile_name, lfile_name)
+            except IOError as e:
+                self.__error(str(e))
+
+    def do_mget(self, args):
+        """mget <SELECTION REGEX>
+        Download all remote files that match the given regular expression.
+        The local files will be named the same as the remote files.
+
+        "mget" does not get directories, and it is note recursive.
+        """
+
+        if not len(args):
+            self.__error("Missing argument: <SELECTION REGEX>")
+
+        elif self.__is_open():
+
+            try:
+                self.fe.mget(os.getcwd(), args, True)
             except IOError as e:
                 self.__error(str(e))
 
@@ -315,6 +371,23 @@ class MpFileShell(cmd.Cmd):
 
             try:
                 self.fe.rm(args)
+            except IOError as e:
+                self.__error(str(e))
+
+    def do_mrm(self, args):
+        """mrm <SELECTION REGEX>
+        Delete all remote files that match the given regular expression.
+
+        "mrm" does not delete directories, and it is note recursive.
+        """
+
+        if not len(args):
+            self.__error("Missing argument: <SELECTION REGEX>")
+
+        elif self.__is_open():
+
+            try:
+                self.fe.mrm(args, True)
             except IOError as e:
                 self.__error(str(e))
 
@@ -441,6 +514,7 @@ def main():
 if __name__ == '__main__':
 
     main()
+
     '''
     try:
         main()

@@ -32,6 +32,11 @@ To install this tool execute the following:
     sudo pip install colorama
     sudo python setup.py install
     
+## General
+
+    The shall supports TAB completion for commands and file names.
+    So it totally is worth it pressing TAB-TAB every now and then :-)
+    
 ## Shell Usage
 
 Start the shell with:
@@ -40,15 +45,11 @@ Start the shell with:
 
 At the shell prompt, first connect to the device:
 
-    mpfs> open /dev/ttyUSB0
+    mpfs> open ttyUSB0
 
 Now you can list the files on the device with:
 
     mpfs> ls
-
-    Remote files:
-
-     boot.py
 
 To upload e.g. the local file "boot.py" to the device use:
 
@@ -58,6 +59,11 @@ If you like to use a different filename on the device, you could use this:
 
     mpfs> put boot.py main.py
 
+Or to upload all files that match a regular expression from the 
+current local directory to the current remote directory:
+
+    mpfs> mput .*\.py
+
 And to download e.g. the file "boot.py" from the device use:
 
     mpfs> get boot.py
@@ -66,9 +72,18 @@ Using a different local file name:
 
     mpfs> get boot.py my_boot.py
 
+Or to download all files that match a regular expression from the 
+current remote directory to the current local directory:
+
+    mpfs> mget .*\.py
+
 To remove a file (or directory) on the device use:
 
     mpfs> rm boot.py
+
+Or remove all remote files that match a regular expression:
+
+    mpfs> mrm test.*\.py
 
 To create a new remote directory:
 
@@ -109,18 +124,18 @@ The shell is also scriptable.
 
 E.g. to execute a command, and then enter the shell:
 
-    mpfshell -c "open /dev/ttyUSB0"
+    mpfshell -c "open ttyUSB0"
     
 Or to copy the file "boot.py" to the device, and don't enter the shell at all:
 
-    mpfshell -n -c "open /dev/ttyUSB0; put boot.py"
+    mpfshell -n -c "open ttyUSB0; put boot.py"
 
 It is also possible to put a bunch of shell commands in a file, and then execute
 them from that file.
  
 E.g. creating a file called "myscript.mpf":
 
-    open /dev/ttyUSB0 
+    open ttyUSB0 
     put boot.py
     put main.py
     ls
