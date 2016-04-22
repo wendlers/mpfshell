@@ -34,8 +34,8 @@ To install this tool execute the following:
     
 ## General
 
-    The shall supports TAB completion for commands and file names.
-    So it totally is worth it pressing TAB-TAB every now and then :-)
+The shell supports TAB completion for commands and file names.
+So it totally is worth it pressing TAB-TAB every now and then :-)
     
 ## Shell Usage
 
