@@ -1,5 +1,5 @@
 # mpfshell / mpfmount
-2016-03-22, sw@kaltpost.de
+2016-03-25, sw@kaltpost.de
 
 A simple shell based file explorer and FUSE based mounter for ESP8266 
 [Micropython](https://github.com/micropython/micropython) based devices.
@@ -12,15 +12,24 @@ The FUSE integration allows to mount a ESP8266 based Micropython device into
 the file system. It currently offers basic operations like read, write, delete
 and rename, as well as some special functions (all provided tough the filesystem).
 
+__Note__: The software is tested on Ubunto 16.04 LTS.
+
 ## Requirements
 
-* Python 2.7
+General:
+
 * ESP8266 board running latest [Micropython](https://github.com/micropython/micropython)
+
+For the shell:
+
+* Python 2.7
+* The PySerial library >= 3.0 (sudo pip install pyserial)
+* The colorama library >= 0.3.6 (sudo pip install colorama)
+
+Additionally for the FuseMount:
+
 * OS supporting fuse (Linux, Mac OS)
-* The fusepy library (sudo pip install fusepy)
-* The colorama library (sudo pip install colorama)
-* The [pyboard.py] (https://github.com/micropython/micropython/tree/master/tools) tool from the 
-  Micropython repository needs to be in the python path (for convenience, this file is included here too)
+* The fusepy library >= 2.0 (sudo pip install fusepy)
   
 __Note__: The tools only work if the REPL is accessible on the device!
 

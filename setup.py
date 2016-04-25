@@ -8,7 +8,7 @@ setup(name='mpfshell',
       author='Stefan Wendler',
       author_email='sw@kaltpost.de',
       url='https://www.kaltpost.de/',
-      requires=['fusepy', 'colorama'],
+      requires=['pyserial', 'fusepy', 'colorama'],
       packages=['mp'],
       scripts=['mpfshell', 'mpfmount']
       )
