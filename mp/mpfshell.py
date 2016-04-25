@@ -38,25 +38,11 @@ import argparse
 import colorama
 import glob
 
-from serial.tools.miniterm import Miniterm, console, CONVERT_CRLF, NEWLINE_CONVERISON_MAP
+from serial.tools.miniterm import Miniterm 
 
 from mp.mpfexp import MpFileExplorer
 from mp.mpfexp import RemoteIOError
 from mp.pyboard import PyboardError
-
-
-class MpTerminal(Miniterm):
-
-    def __init__(self, serial):
-
-        self.serial = serial
-        self.echo = False
-        self.repr_mode = 0
-        self.convert_outgoing = CONVERT_CRLF
-        self.newline = NEWLINE_CONVERISON_MAP[self.convert_outgoing]
-        self.dtr_state = True
-        self.rts_state = True
-        self.break_state = False
 
 
 class MpFileShell(cmd.Cmd):
@@ -447,11 +433,16 @@ class MpFileShell(cmd.Cmd):
 
         if self.__is_open():
 
-            miniterm = MpTerminal(self.fe.serial)
+            miniterm = Miniterm(self.fe.serial)
+
+            miniterm.exit_character = unichr(0x1d)
+            miniterm.menu_character = unichr(0x14)
+            miniterm.raw = False 
+            miniterm.set_rx_encoding('UTF-8')
+            miniterm.set_tx_encoding('UTF-8')
 
             self.fe.teardown()
 
-            console.setup()
             miniterm.start()
 
             print("\n*** Exit REPL with Ctrl+] ***")
@@ -461,7 +452,8 @@ class MpFileShell(cmd.Cmd):
             except KeyboardInterrupt:
                 pass
 
-            console.cleanup()
+            # console.cleanup()
+            miniterm.console.cleanup()
             self.fe.setup()
             print("")
 
