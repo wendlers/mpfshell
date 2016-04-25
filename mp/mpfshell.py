@@ -48,7 +48,7 @@ from mp.pyboard import PyboardError
 class MpFileShell(cmd.Cmd):
 
     intro = '\n' + colorama.Fore.GREEN + \
-            '** Micropython File Shell v0.3, 2016 sw@kaltpost.de ** ' + \
+            '** Micropython File Shell v0.4, 2016 sw@kaltpost.de ** ' + \
             colorama.Fore.RESET + '\n'
 
     prompt = colorama.Fore.BLUE + "mpfs [" + \
