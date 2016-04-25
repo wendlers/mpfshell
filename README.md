@@ -37,8 +37,9 @@ __Note__: The tools only work if the REPL is accessible on the device!
 
 To install this tool execute the following:
 
-    sudo pip install fusepy
+	sudo pip install pyserial
     sudo pip install colorama
+    sudo pip install fusepy
     sudo python setup.py install
     
 ## General
