@@ -457,6 +457,59 @@ class MpFileShell(cmd.Cmd):
             self.fe.setup()
             print("")
 
+    def do_sta(self, args):
+
+        if self.__is_open():
+
+            s_args = args.split(" ")
+
+            if len(args) >= 1:
+                if s_args[0] == "info":
+
+                    print("")
+                    print("WiFi STA status:")
+                    print("")
+
+                    self.fe.exec_("import network")
+                    self.fe.exec_("wifi = network.WLAN(network.STA_IF)")
+
+                    res = self.fe.eval("wifi.active()")
+                    print("      active: %s" % res)
+
+                    res = self.fe.eval("wifi.isconnected()")
+                    print("   connected: %s" % res)
+
+                    res = self.fe.eval("wifi.ifconfig()")
+                    print("    ifconfig: %s" % res)
+
+                    print("")
+
+                elif s_args[0] == "activate" and len(s_args) == 3:
+
+                    print("")
+                    print("Trying to connect to AP")
+                    print("")
+
+                    self.fe.exec_("import network")
+                    self.fe.exec_("wifi = network.WLAN(network.STA_IF)")
+                    self.fe.exec_("wifi.active(True)")
+                    self.fe.exec_("wifi.connect('%s', '%s')" % (s_args[1], s_args[2]))
+
+                elif s_args[0] == "deactivate":
+
+                    print("")
+                    print("Deactivating STA")
+                    print("")
+
+                    self.fe.exec_("import network")
+                    self.fe.exec_("wifi = network.WLAN(network.STA_IF)")
+                    self.fe.exec_("wifi.active(False)")
+
+                else:
+                    self.__error("INVALID arguments")
+
+            else:
+                self.__error("MISSING argument: info | activate | deactivate")
 
 def main():
 
