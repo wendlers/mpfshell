@@ -1,5 +1,5 @@
-# mpfshell / mpfmount
-2016-03-25, sw@kaltpost.de
+# mpfshell
+2016-06-03, sw@kaltpost.de
 
 A simple shell based file explorerfor ESP8266 and WiPy 
 [Micropython](https://github.com/micropython/micropython) based devices.
@@ -8,6 +8,9 @@ The shell is a "quick" solution for up/downloading files to the ESP8266  and WiP
 port of MP over the serial line. It basically offers commands to list and upload/download 
 files on the flash FS of the device.
 
+All files are transferred in binary mode, and thus it should be possible to also upload 
+precompiled code (.mpy) too.
+
 __Note__: The software is tested on Ubunto 16.04 LTS.
 
 ## Requirements
@@ -15,6 +18,7 @@ __Note__: The software is tested on Ubunto 16.04 LTS.
 General:
 
 * ESP8266 or WiPy board running latest [Micropython](https://github.com/micropython/micropython)
+* For the WiPy, please note, that you need to enable REPL on UART as described [her](http://micropython.org/resources/docs/en/latest/wipy/wipy/tutorial/repl.html)
 
 For the shell:
 
