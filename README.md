@@ -18,7 +18,7 @@ __Note__: The software is tested on Ubunto 16.04 LTS.
 General:
 
 * ESP8266 or WiPy board running latest [Micropython](https://github.com/micropython/micropython)
-* For the WiPy, please note, that you need to enable REPL on UART as described [her](http://micropython.org/resources/docs/en/latest/wipy/wipy/tutorial/repl.html)
+* For the WiPy, please note, that you need to enable REPL on UART as described [here](http://micropython.org/resources/docs/en/latest/wipy/wipy/tutorial/repl.html)
 
 For the shell:
 
