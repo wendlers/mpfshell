@@ -152,7 +152,7 @@ class Pyboard:
         if isinstance(command, bytes):
             command_bytes = command
         else:
-            command_bytes = bytes(command, encoding='utf8')
+            command_bytes = bytes(command.encode('utf-8'))
 
         # check we have a prompt
         data = self.read_until(1, b'>')

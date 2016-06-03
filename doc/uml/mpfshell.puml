@@ -2,13 +2,9 @@
 
 class Pyboard
 class MpFileExplorer
-class MpCachingFileExplorer
 class MpFileShell
-class MpFileFuse
 
 Pyboard <|- MpFileExplorer
 MpFileExplorer <- MpFileShell
-MpFileExplorer <- MpCachingFileExplorer
-MpCachingFileExplorer <- MpFileFuse
 
 @enduml

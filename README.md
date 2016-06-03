@@ -1,16 +1,12 @@
 # mpfshell / mpfmount
 2016-03-25, sw@kaltpost.de
 
-A simple shell based file explorer and FUSE based mounter for ESP8266 
+A simple shell based file explorerfor ESP8266 and WiPy 
 [Micropython](https://github.com/micropython/micropython) based devices.
 
-The shell is a "quick" solution for up/downloading files to the ESP8266 port
-of MP. It basically offers commands to list and upload/download files on the
-flash FS of the device.
-
-The FUSE integration allows to mount a ESP8266 based Micropython device into
-the file system. It currently offers basic operations like read, write, delete
-and rename, as well as some special functions (all provided tough the filesystem).
+The shell is a "quick" solution for up/downloading files to the ESP8266  and WiPy 
+port of MP over the serial line. It basically offers commands to list and upload/download 
+files on the flash FS of the device.
 
 __Note__: The software is tested on Ubunto 16.04 LTS.
 
@@ -18,7 +14,7 @@ __Note__: The software is tested on Ubunto 16.04 LTS.
 
 General:
 
-* ESP8266 board running latest [Micropython](https://github.com/micropython/micropython)
+* ESP8266 or WiPy board running latest [Micropython](https://github.com/micropython/micropython)
 
 For the shell:
 
@@ -26,11 +22,6 @@ For the shell:
 * The PySerial library >= 3.0 (sudo pip install pyserial)
 * The colorama library >= 0.3.6 (sudo pip install colorama)
 
-Additionally for the FuseMount:
-
-* OS supporting fuse (Linux, Mac OS)
-* The fusepy library >= 2.0 (sudo pip install fusepy)
-  
 __Note__: The tools only work if the REPL is accessible on the device!
 
 ## Installing
@@ -39,7 +30,6 @@ To install this tool execute the following:
 
 	sudo pip install pyserial
     sudo pip install colorama
-    sudo pip install fusepy
     sudo python setup.py install
     
 ## General
@@ -153,50 +143,3 @@ E.g. creating a file called "myscript.mpf":
 And execute it with:
 
     mpfshell -s myscript.mpf    
-
-## FUSE Mount Usage
-
-Mount device on port "/dev/ttyUSB0" to "$HOME/mp":
-
-    test -d $HOME/mp || mkdir $HOME/mp
-    mpfmount -p /dev/ttyUSB0 -m $HOME/mp
-    cd $HOME/mp
-      
-Now, work with the files as if they where normal files. When done
-editing, creating etc. commit your changes back to the MP board.
-    
-Commit a single file (e.g. "boot.py"):
-
-    echo "boot.py" > $HOME/mnt/.commit
-
-Commit all changed files:
-
-    echo "*" > $HOME/mp/.commit
-
-Or, as a short-cut for the above, jsut execute the ".commit" file:
-
-    ./.commit
-
-__Note__: Changes are not committed before un-mounting will be lost!
-
-While the MP board is FUSE mounted, the serial line (to the REPL) is
-occupied. To overcome this problem, there is an other special file
-in the mounted FS called ".release". This file could be used to 
-make the FUSE mounter release the serial line to allow terminal access,
-and later reattach the line (while the serial line is released,
-no commits to the MP board are possible).
- 
-Relase the serial line, access REPL with terminal (miniterm.py from pyserial):
-
-    echo "1" > .release
-    miniterm.py -p /dev/ttyUSB0 -b 115200
-
-When done with the terminal, reattach the serial line:
-
-    echo "0" > .release
-
-For the above three commands, there is an other shortcut called ".terminal".
-If executed, it will release the serial line, connect miniterm to the REPL, and
-when minierm is ended by the user reattaches the serial line:
-
-    ./.terminal

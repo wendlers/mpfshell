@@ -24,6 +24,7 @@
 
 import os
 import re
+import binascii
 
 from mp.pyboard import Pyboard
 from mp.pyboard import PyboardError
@@ -34,6 +35,7 @@ class RemoteIOError(IOError):
 
 
 class MpFileExplorer(Pyboard):
+    BIN_CHUNK_SIZE = 126
 
     def __init__(self, port, baudrate=115200):
         Pyboard.__init__(self, port, baudrate)
@@ -69,7 +71,7 @@ class MpFileExplorer(Pyboard):
     def setup(self):
 
         self.enter_raw_repl()
-        self.exec_("import os, sys")
+        self.exec_("import os, sys, ubinascii")
 
     def ls(self, add_files=True, add_dirs=True, add_details=False):
 
@@ -101,8 +103,8 @@ class MpFileExplorer(Pyboard):
                         else:
                             files.append(f)
 
-        except PyboardError:
-            raise RemoteIOError("Device communication failed")
+        except PyboardError as e:
+            raise RemoteIOError("Device communication failed: %s" % e)
 
         return files
 
@@ -113,8 +115,8 @@ class MpFileExplorer(Pyboard):
 
         try:
             self.eval("os.remove('%s')" % self.__fqn(target))
-        except PyboardError:
-            raise RemoteIOError("Device communication failed")
+        except PyboardError as e:
+            raise RemoteIOError("Device communication failed: %s" % e)
 
     def mrm(self, pat, verbose=False):
 
@@ -128,12 +130,10 @@ class MpFileExplorer(Pyboard):
 
                 self.rm(f)
 
-    def put(self, src, dst=None, binary=False):
+    def put(self, src, dst=None):
 
-        assert not binary, "Binary mode not implemented"
-
-        f = open(src, "r")
-        lines = f.readlines()
+        f = open(src, "rb")
+        data = f.read()
         f.close()
 
         if dst is None:
@@ -141,19 +141,22 @@ class MpFileExplorer(Pyboard):
 
         try:
 
-            self.exec_("f = open('%s', 'w')" % self.__fqn(dst))
+            self.exec_("f = open('%s', 'wb')" % self.__fqn(dst))
 
-            for l in lines:
-                self.exec_("f.write('%s')" % l.encode("string-escape"))
+            while True:
+                c = binascii.hexlify(data[:self.BIN_CHUNK_SIZE])
+                if not len(c):
+                    break
+
+                self.exec_("f.write(ubinascii.unhexlify('%s'))" % c)
+                data = data[self.BIN_CHUNK_SIZE:]
 
             self.exec_("f.close()")
 
-        except PyboardError:
-            raise RemoteIOError("Device communication failed")
+        except PyboardError as e:
+            raise RemoteIOError("Device communication failed: %s" % e)
 
-    def mput(self, src_dir, pat, verbose=False, binary=False):
-
-        assert not binary, "Binary mode not implemented"
+    def mput(self, src_dir, pat, verbose=False):
 
         find = re.compile(pat)
         files = os.listdir(src_dir)
@@ -163,11 +166,9 @@ class MpFileExplorer(Pyboard):
                 if verbose:
                     print(" * put %s" % f)
 
-                self.put(os.path.join(src_dir, f), f, binary=binary)
+                self.put(os.path.join(src_dir, f), f)
 
-    def get(self, src, dst=None, binary=False):
-
-        assert not binary, "Binary mode not implemented"
+    def get(self, src, dst=None):
 
         if src not in self.ls():
             raise RemoteIOError("No such file or directory: '%s'" % self.__fqn(src))
@@ -175,20 +176,24 @@ class MpFileExplorer(Pyboard):
         if dst is None:
             dst = src
 
-        f = open(dst, "w")
+        f = open(dst, "wb")
 
         try:
-            self.exec_("f = open('%s', 'r')" % self.__fqn(src))
-            ret = self.exec_("for l in f: sys.stdout.write(l),")
-        except PyboardError:
-            raise RemoteIOError("Device communication failed")
+            self.exec_("f = open('%s', 'rb')" % self.__fqn(src))
+            ret = self.exec_(
+                "while True:\r\n"
+                "  c = ubinascii.hexlify(f.read(%s))\r\n"
+                "  if not len(c):\r\n"
+                "    break\r\n"
+                "  sys.stdout.write(c)\r\n" % self.BIN_CHUNK_SIZE
+            )
+        except PyboardError as e:
+            raise RemoteIOError("Device communication failed: %s" % e)
 
-        f.write(ret)
+        f.write(binascii.unhexlify(ret))
         f.close()
 
-    def mget(self, dst_dir, pat, verbose=False, binary=False):
-
-        assert not binary, "Binary mode not implemented"
+    def mget(self, dst_dir, pat, verbose=False):
 
         files = self.ls(add_dirs=False)
         find = re.compile(pat)
@@ -198,7 +203,7 @@ class MpFileExplorer(Pyboard):
                 if verbose:
                     print(" * get %s" % f)
 
-                self.get(f, dst=os.path.join(dst_dir, f), binary=binary)
+                self.get(f, dst=os.path.join(dst_dir, f))
 
     def gets(self, src):
 
@@ -208,8 +213,8 @@ class MpFileExplorer(Pyboard):
         try:
             self.exec_("f = open('%s', 'r')" % self.__fqn(src))
             ret = self.exec_("for l in f: sys.stdout.write(l),")
-        except PyboardError:
-            raise RemoteIOError("Device communication failed")
+        except PyboardError as e:
+            raise RemoteIOError("Device communication failed: %s" % e)
 
         return ret
 
@@ -224,8 +229,8 @@ class MpFileExplorer(Pyboard):
 
             self.exec_("f.close()")
 
-        except PyboardError:
-            raise RemoteIOError("Device communication failed")
+        except PyboardError as e:
+            raise RemoteIOError("Device communication failed: %s" % e)
 
     def size(self, target):
 
@@ -251,5 +256,5 @@ class MpFileExplorer(Pyboard):
 
         try:
             self.eval("os.mkdir('%s')" % self.__fqn(dir))
-        except PyboardError:
-            raise RemoteIOError("Device communication failed")
+        except PyboardError as e:
+            raise RemoteIOError("Device communication failed: %s" % e)
