@@ -5,11 +5,19 @@ A simple shell based file explorer for ESP8266 and WiPy
 [Micropython](https://github.com/micropython/micropython) based devices.
 
 The shell is a "quick" solution for up/downloading files to the ESP8266 (over serial line) and WiPy 
-(serial line and telnet) port of MP. It basically offers commands to list and upload/download 
+(serial line and telnet). It basically offers commands to list and upload/download 
 files on the flash FS of the device.
 
-All files are transferred in binary mode, and thus it should be possible to also upload 
-pre-compiled code (.mpy) too.
+Main features:
+
+* Support for serial connections (ESP8266 and WiPi)
+* Support for telnet connections (WiPy only)
+* Full directory handling (enter, create, remove)
+* Transfer (upload/download) of multiple files matching a reg.-exp.
+* All files are transferred in binary mode, and thus it should be 
+  possible to also upload pre-compiled code (.mpy) too.
+* Best of all: it comes with color
+
 
 __Note__: The software is tested on Ubunto 16.04 LTS.
 
