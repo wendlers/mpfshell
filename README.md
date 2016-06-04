@@ -8,6 +8,8 @@ The shell is a "quick" solution for up/downloading files to the ESP8266 (over se
 (serial line and telnet). It basically offers commands to list and upload/download 
 files on the flash FS of the device.
 
+![mpfshell](./doc/screenshot.png)
+
 Main features:
 
 * Support for serial connections (ESP8266 and WiPi)
