@@ -43,6 +43,7 @@ from serial.tools.miniterm import Miniterm
 from mp.mpfexp import MpFileExplorer
 from mp.mpfexp import RemoteIOError
 from mp.pyboard import PyboardError
+from mp.conbase import ConError
 
 
 class MpFileShell(cmd.Cmd):
@@ -61,27 +62,33 @@ class MpFileShell(cmd.Cmd):
         self.fe = None
 
     def __del__(self):
-
         self.__disconnect()
 
     def __set_prompt_path(self):
 
+        if self.fe is not None:
+            pwd = self.fe.pwd()
+        else:
+            pwd = "/"
+
         self.prompt = colorama.Fore.BLUE + "mpfs [" + \
-                      colorama.Fore.YELLOW + self.fe.pwd() + \
+                      colorama.Fore.YELLOW + pwd + \
                       colorama.Fore.BLUE + "]> " + colorama.Fore.RESET
 
     def __error(self, msg):
 
         print('\n' + colorama.Fore.RED + msg + colorama.Fore.RESET + '\n')
-        # sys.stderr.write("\n" + msg + "\n\n")
 
     def __connect(self, port):
 
         try:
             self.__disconnect()
             self.fe = MpFileExplorer(port)
+            print("Connected to %s" % self.fe.sysname)
         except PyboardError as e:
             self.__error(str(e[-1]))
+        except ConError as e:
+            self.__error("Failed to open: %s" % port)
         except AttributeError:
             self.__error("Failed to open: %s" % port)
 
@@ -91,6 +98,7 @@ class MpFileShell(cmd.Cmd):
             try:
                 self.fe.close()
                 self.fe = None
+                self.__set_prompt_path()
             except RemoteIOError as e:
                 self.__error(str(e))
 
@@ -119,8 +127,8 @@ class MpFileShell(cmd.Cmd):
         if not len(args):
             self.__error("Missing argument: <PORT>")
         else:
-            if not args.startswith("/dev/"):
-                args = "/dev/" + args
+            if not args.startswith("ser:/dev/") and not args.startswith("tn:"):
+                args = "ser:/dev/" + args
 
             self.__connect(args)
 
@@ -433,7 +441,7 @@ class MpFileShell(cmd.Cmd):
 
         if self.__is_open():
 
-            miniterm = Miniterm(self.fe.serial)
+            miniterm = Miniterm(self.fe.con)
 
             miniterm.exit_character = unichr(0x1d)
             miniterm.menu_character = unichr(0x14)
@@ -505,12 +513,10 @@ def main():
 
 if __name__ == '__main__':
 
-    main()
+    # main()
 
-    '''
     try:
         main()
     except Exception as e:
         sys.stderr.write(str(e) + "\n")
         exit(1)
-    '''

@@ -25,9 +25,13 @@
 import os
 import re
 import binascii
+import getpass
 
 from mp.pyboard import Pyboard
 from mp.pyboard import PyboardError
+from mp.conserial import ConSerial
+from mp.contelnet import ConTelnet
+from mp.conbase import ConError
 
 
 class RemoteIOError(IOError):
@@ -37,11 +41,22 @@ class RemoteIOError(IOError):
 class MpFileExplorer(Pyboard):
     BIN_CHUNK_SIZE = 126
 
-    def __init__(self, port, baudrate=115200):
-        Pyboard.__init__(self, port, baudrate)
+    def __init__(self, constr):
+        """
+        ser:/dev/ttyUSB1,115200
+        tn:192.168.1.101,23
+        ws:192.168.1.102,8080
+
+        :param constr:
+        """
+
+        try:
+            Pyboard.__init__(self, self.__con_from_str(constr))
+        except Exception as e:
+            raise ConError(e)
 
         self.dir = "/"
-
+        self.sysname = None
         self.setup()
 
     def __del__(self):
@@ -56,6 +71,47 @@ class MpFileExplorer(Pyboard):
         except:
             pass
 
+    def __con_from_str(self, constr):
+
+        con = None
+
+        proto, target = constr.split(":")
+        params = target.split(",")
+
+        if proto.strip(" ") == "ser":
+            port = params[0].strip(" ")
+
+            if len(params) > 1:
+                baudrate = int(params[1].strip(" "))
+            else:
+                baudrate = 115200
+
+            # print("serial connection to: %s, %d" % (port, baudrate))
+            con = ConSerial(port=port, baudrate=baudrate)
+
+        elif proto.strip(" ") == "tn":
+
+            host = params[0].strip(" ")
+
+            if len(params) > 1:
+                login = params[1].strip(" ")
+            else:
+                print("")
+                login = raw_input("telnet login : ")
+
+            if len(params) > 2:
+                passwd = params[2].strip(" ")
+            else:
+                passwd = getpass.getpass("telnet passwd: ")
+
+            # print("telnet connection to: %s, %s, %s" % (host, login, passwd))
+            con = ConTelnet(ip=host, user=login, password=passwd)
+
+        elif proto.strip(" ") == "ws":
+            raise NotImplemented()
+
+        return con
+
     def __fqn(self, name):
 
         if self.dir.endswith("/"):
@@ -65,13 +121,22 @@ class MpFileExplorer(Pyboard):
 
         return fqn
 
+    def __set_sysname(self):
+        self.sysname = self.eval("os.uname()[0]")
+
+    def close(self):
+        Pyboard.close(self)
+        self.dir = "/"
+
     def teardown(self):
         self.exit_raw_repl()
+        self.sysname = None
 
     def setup(self):
 
         self.enter_raw_repl()
         self.exec_("import os, sys, ubinascii")
+        self.__set_sysname()
 
     def ls(self, add_files=True, add_dirs=True, add_details=False):
 
@@ -91,9 +156,15 @@ class MpFileExplorer(Pyboard):
                         else:
                             files.append(f)
                     except PyboardError:
-                        pass
+                        if self.sysname == "WiPy" and self.dir == "/":
+                            # for the WiPy, assume that all entries in the root of th FS
+                            # are mount-points, and thus treat them as directories
+                            if add_details:
+                                files.append((f, 'D'))
+                            else:
+                                files.append(f)
 
-            if add_files:
+            if add_files and not (self.sysname == "WiPy" and self.dir == "/"):
                 for f in tmp:
                     try:
                         self.eval("os.listdir('%s/%s')" % (self.dir, f))
@@ -239,11 +310,18 @@ class MpFileExplorer(Pyboard):
     def cd(self, dir):
 
         if dir.startswith("/"):
-            self.dir = dir
+            tmp_dir = dir
         elif dir == "..":
-            self.dir, _ = os.path.split(self.dir)
+            tmp_dir, _ = os.path.split(self.dir)
         else:
-            self.dir = self.__fqn(dir)
+            tmp_dir = self.__fqn(dir)
+
+        # see if the new dir exists
+        try:
+            self.eval("os.listdir('%s')" % tmp_dir)
+            self.dir = tmp_dir
+        except PyboardError:
+            raise RemoteIOError("Invalid directory: %s" % dir)
 
     def pwd(self):
 

@@ -1,15 +1,15 @@
 # mpfshell
 2016-06-03, sw@kaltpost.de
 
-A simple shell based file explorerfor ESP8266 and WiPy 
+A simple shell based file explorer for ESP8266 and WiPy 
 [Micropython](https://github.com/micropython/micropython) based devices.
 
-The shell is a "quick" solution for up/downloading files to the ESP8266  and WiPy 
-port of MP over the serial line. It basically offers commands to list and upload/download 
+The shell is a "quick" solution for up/downloading files to the ESP8266 (over serial line) and WiPy 
+(serial line and telnet) port of MP. It basically offers commands to list and upload/download 
 files on the flash FS of the device.
 
 All files are transferred in binary mode, and thus it should be possible to also upload 
-precompiled code (.mpy) too.
+pre-compiled code (.mpy) too.
 
 __Note__: The software is tested on Ubunto 16.04 LTS.
 
@@ -18,7 +18,8 @@ __Note__: The software is tested on Ubunto 16.04 LTS.
 General:
 
 * ESP8266 or WiPy board running latest [Micropython](https://github.com/micropython/micropython)
-* For the WiPy, please note, that you need to enable REPL on UART as described [here](http://micropython.org/resources/docs/en/latest/wipy/wipy/tutorial/repl.html)
+* For the WiPy, please note, that you need to enable REPL on UART if you intend to connect
+  via serial line to the WiPy (see [here](http://micropython.org/resources/docs/en/latest/wipy/wipy/tutorial/repl.html))
 
 For the shell:
 
@@ -26,7 +27,7 @@ For the shell:
 * The PySerial library >= 3.0 (sudo pip install pyserial)
 * The colorama library >= 0.3.6 (sudo pip install colorama)
 
-__Note__: The tools only work if the REPL is accessible on the device!
+__Note__: The tools only works if the REPL is accessible on the device!
 
 ## Installing
 
@@ -47,9 +48,16 @@ Start the shell with:
 
     mpfshell
 
-At the shell prompt, first connect to the device:
+At the shell prompt, first connect to the device. E.g. to connect 
+via serail line:
 
     mpfs> open ttyUSB0
+    
+Or connect vial telnet (WiPy) only:
+
+    mpfs> open tn:192.168.1.1,micro,python
+    
+__Note__: Login and password are optional. If left out, they will be asked for. 
 
 Now you can list the files on the device with:
 
