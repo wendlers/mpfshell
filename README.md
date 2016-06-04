@@ -18,6 +18,7 @@ Main features:
 * Transfer (upload/download) of multiple files matching a reg.-exp.
 * All files are transferred in binary mode, and thus it should be 
   possible to also upload pre-compiled code (.mpy) too.
+* Integrated REPL (supporting a workflow like: upload changed files, enter REPL, test, exit REPL, upload ...)
 * Fully scriptable
 * Best of all: it comes with color
 
