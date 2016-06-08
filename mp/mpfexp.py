@@ -31,6 +31,7 @@ from mp.pyboard import Pyboard
 from mp.pyboard import PyboardError
 from mp.conserial import ConSerial
 from mp.contelnet import ConTelnet
+from mp.conwebsock import ConWebsock
 from mp.conbase import ConError
 
 
@@ -39,7 +40,7 @@ class RemoteIOError(IOError):
 
 
 class MpFileExplorer(Pyboard):
-    BIN_CHUNK_SIZE = 126
+    BIN_CHUNK_SIZE = 64
 
     def __init__(self, constr):
         """
@@ -108,7 +109,15 @@ class MpFileExplorer(Pyboard):
             con = ConTelnet(ip=host, user=login, password=passwd)
 
         elif proto.strip(" ") == "ws":
-            raise NotImplemented()
+
+            host = params[0].strip(" ")
+
+            if len(params) > 1:
+                passwd = params[1].strip(" ")
+            else:
+                passwd = getpass.getpass("webrepl passwd: ")
+
+            con = ConWebsock(host, passwd)
 
         return con
 

@@ -49,7 +49,7 @@ from mp.conbase import ConError
 class MpFileShell(cmd.Cmd):
 
     intro = '\n' + colorama.Fore.GREEN + \
-            '** Micropython File Shell v0.5, 2016 sw@kaltpost.de ** ' + \
+            '** Micropython File Shell v0.6, 2016 sw@kaltpost.de ** ' + \
             colorama.Fore.RESET + '\n'
 
     prompt = colorama.Fore.BLUE + "mpfs [" + \
@@ -127,7 +127,7 @@ class MpFileShell(cmd.Cmd):
         if not len(args):
             self.__error("Missing argument: <PORT>")
         else:
-            if not args.startswith("ser:/dev/") and not args.startswith("tn:"):
+            if not args.startswith("ser:/dev/") and not args.startswith("tn:") and not args.startswith("ws:"):
                 args = "ser:/dev/" + args
 
             self.__connect(args)

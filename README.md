@@ -4,8 +4,8 @@
 A simple shell based file explorer for ESP8266 and WiPy 
 [Micropython](https://github.com/micropython/micropython) based devices.
 
-The shell is a "quick" solution for up/downloading files to the ESP8266 (over serial line) and WiPy 
-(serial line and telnet). It basically offers commands to list and upload/download 
+The shell is a helper for up/downloading files to the ESP8266 (over serial line and Websockets) 
+and WiPy (serial line and telnet). It basically offers commands to list and upload/download 
 files on the flash FS of the device.
 
 ![mpfshell](./doc/screenshot.png)
@@ -13,6 +13,7 @@ files on the flash FS of the device.
 Main features:
 
 * Support for serial connections (ESP8266 and WiPi)
+* Support for websockets (via WebREPL) connections (ESP8266 only)
 * Support for telnet connections (WiPy only)
 * Full directory handling (enter, create, remove)
 * Transfer (upload/download) of multiple files matching a reg.-exp.
@@ -30,6 +31,8 @@ __Note__: The software is tested on Ubunto 16.04 LTS.
 General:
 
 * ESP8266 or WiPy board running latest [Micropython](https://github.com/micropython/micropython)
+* For the ESP8266 firware build from the repository, please not, that WebREPL is not started
+  by default. For more information see the [quickstart](http://micropython.org/resources/docs/en/latest/esp8266/esp8266/quickref.html#webrepl-web-browser-interactive-prompt).
 * For the WiPy, please note, that you need to enable REPL on UART if you intend to connect
   via serial line to the WiPy (see [here](http://micropython.org/resources/docs/en/latest/wipy/wipy/tutorial/repl.html))
 
@@ -38,6 +41,7 @@ For the shell:
 * Python 2.7
 * The PySerial library >= 3.0 (sudo pip install pyserial)
 * The colorama library >= 0.3.6 (sudo pip install colorama)
+* The websocket-client library >= 0.35.0 (sudo pip install websocket-client)
 
 __Note__: The tools only works if the REPL is accessible on the device!
 
@@ -47,6 +51,7 @@ To install this tool execute the following:
 
 	sudo pip install pyserial
     sudo pip install colorama
+    sudo pip install websocket-client
     sudo python setup.py install
     
 ## General
@@ -65,7 +70,11 @@ via serail line:
 
     mpfs> open ttyUSB0
     
-Or connect vial telnet (WiPy) only:
+Or connect via websocket (ESP8266 only):
+
+    mpfs> open ws:192.168.1.1,python
+    
+Or connect vial telnet (WiPy only):
 
     mpfs> open tn:192.168.1.1,micro,python
     
