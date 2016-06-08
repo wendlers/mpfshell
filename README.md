@@ -22,6 +22,7 @@ Main features:
 * Integrated REPL (supporting a workflow like: upload changed files, enter REPL, test, exit REPL, upload ...)
 * Fully scriptable
 * Tab-completion
+* Command history
 * Best of all: it comes with color
 
 
