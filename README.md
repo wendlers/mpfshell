@@ -21,6 +21,7 @@ Main features:
   possible to also upload pre-compiled code (.mpy) too.
 * Integrated REPL (supporting a workflow like: upload changed files, enter REPL, test, exit REPL, upload ...)
 * Fully scriptable
+* Tab-completion
 * Best of all: it comes with color
 
 
