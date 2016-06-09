@@ -48,21 +48,30 @@ from mp.conbase import ConError
 
 class MpFileShell(cmd.Cmd):
 
-    intro = '\n' + colorama.Fore.GREEN + \
-            '** Micropython File Shell v0.6, 2016 sw@kaltpost.de ** ' + \
-            colorama.Fore.RESET + '\n'
+    def __init__(self, color=False):
 
-    prompt = colorama.Fore.BLUE + "mpfs [" + \
-             colorama.Fore.YELLOW + "/" + \
-             colorama.Fore.BLUE + "]> " + colorama.Fore.RESET
+        self.color = color
 
-    def __init__(self):
+        if self.color:
+            colorama.init()
 
         cmd.Cmd.__init__(self)
         self.fe = None
 
+        self.__intro()
+        self.__set_prompt_path()
+
     def __del__(self):
         self.__disconnect()
+
+    def __intro(self):
+
+        if self.color:
+            self.intro = '\n' + colorama.Fore.GREEN + \
+                         '** Micropython File Shell v0.6, 2016 sw@kaltpost.de ** ' + \
+                         colorama.Fore.RESET + '\n'
+        else:
+            self.intro = '\n** Micropython File Shell v0.6, 2016 sw@kaltpost.de **\n'
 
     def __set_prompt_path(self):
 
@@ -71,13 +80,19 @@ class MpFileShell(cmd.Cmd):
         else:
             pwd = "/"
 
-        self.prompt = colorama.Fore.BLUE + "mpfs [" + \
-                      colorama.Fore.YELLOW + pwd + \
-                      colorama.Fore.BLUE + "]> " + colorama.Fore.RESET
+        if self.color:
+            self.prompt = colorama.Fore.BLUE + "mpfs [" + \
+                          colorama.Fore.YELLOW + pwd + \
+                          colorama.Fore.BLUE + "]> " + colorama.Fore.RESET
+        else:
+            self.prompt = "mpfs [" + pwd + "]> "
 
     def __error(self, msg):
 
-        print('\n' + colorama.Fore.RED + msg + colorama.Fore.RESET + '\n')
+        if self.color:
+            print('\n' + colorama.Fore.RED + msg + colorama.Fore.RESET + '\n')
+        else:
+            print('\n' + msg + '\n')
 
     def __connect(self, port):
 
@@ -120,8 +135,12 @@ class MpFileShell(cmd.Cmd):
     do_EOF = do_exit
 
     def do_open(self, args):
-        """open <PORT>
-        Open connection to device with given serial port.
+        """open <TARGET>
+        Open connection to device with given target. TARGET might be:
+
+        - a serial port, e.g.       ttyUSB0, ser:/dev/ttyUSB0
+        - a telnet host, e.g        tn:192.168.1.1 or tn:192.168.1.1,login,passwd
+        - a websocket host, e.g.    ws:192.168.1.1 or ws:192.168.1.1,passwd
         """
 
         if not len(args):
@@ -159,9 +178,15 @@ class MpFileShell(cmd.Cmd):
 
                 for elem, type in files:
                     if type == 'F':
-                        print(colorama.Fore.CYAN + ("       %s" % elem) + colorama.Fore.RESET)
+                        if self.color:
+                            print(colorama.Fore.CYAN + ("       %s" % elem) + colorama.Fore.RESET)
+                        else:
+                            print("       %s" % elem)
                     else:
-                        print(colorama.Fore.MAGENTA + (" <dir> %s" % elem) + colorama.Fore.RESET)
+                        if self.color:
+                            print(colorama.Fore.MAGENTA + (" <dir> %s" % elem) + colorama.Fore.RESET)
+                        else:
+                            print(" <dir> %s" % elem)
 
                 print("")
 
@@ -220,12 +245,16 @@ class MpFileShell(cmd.Cmd):
 
         for f in files:
             if os.path.isdir(f):
-                print(colorama.Fore.MAGENTA + (" <dir> %s" % f) + colorama.Fore.RESET)
-
+                if self.color:
+                    print(colorama.Fore.MAGENTA + (" <dir> %s" % f) + colorama.Fore.RESET)
+                else:
+                    print(" <dir> %s" % f)
         for f in files:
             if os.path.isfile(f):
-                print(colorama.Fore.CYAN + ("       %s" % f) + colorama.Fore.RESET)
-
+                if self.color:
+                    print(colorama.Fore.CYAN + ("       %s" % f) + colorama.Fore.RESET)
+                else:
+                    print("       %s" % f)
         print("")
 
     def do_lcd(self, args):
@@ -468,17 +497,17 @@ class MpFileShell(cmd.Cmd):
 
 def main():
 
-    colorama.init()
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--command", help="execute given commands (separated by ;)", default=None, nargs="*")
     parser.add_argument("-s", "--script", help="execute commands from file", default=None)
     parser.add_argument("-n", "--noninteractive", help="non interactive mode (don't enter shell)",
                         action="store_true", default=False)
+    parser.add_argument("-o", "--color", help="enable color",
+                        action="store_true", default=False)
 
     args = parser.parse_args()
 
-    mpfs = MpFileShell()
+    mpfs = MpFileShell(args.color)
 
     if args.command is not None:
 
