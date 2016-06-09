@@ -130,7 +130,7 @@ To navigate remote directories:
     mpfs> cd ..
     mpfs> cd /some/full/path
     
-See which is the curren remote directory:
+See which is the current remote directory:
 
     mpfs> pwd
 
