@@ -38,8 +38,6 @@ import argparse
 import colorama
 import glob
 
-from serial.tools.miniterm import Miniterm 
-
 from mp.mpfexp import MpFileExplorer
 from mp.mpfexp import RemoteIOError
 from mp.pyboard import PyboardError
@@ -50,12 +48,12 @@ class MpFileShell(cmd.Cmd):
 
     def __init__(self, color=False):
 
+        cmd.Cmd.__init__(self)
         self.color = color
 
         if self.color:
             colorama.init()
 
-        cmd.Cmd.__init__(self)
         self.fe = None
 
         self.__intro()
@@ -470,29 +468,38 @@ class MpFileShell(cmd.Cmd):
 
         if self.__is_open():
 
-            miniterm = Miniterm(self.fe.con)
+            import serial
 
-            miniterm.exit_character = unichr(0x1d)
-            miniterm.menu_character = unichr(0x14)
-            miniterm.raw = False 
-            miniterm.set_rx_encoding('UTF-8')
-            miniterm.set_tx_encoding('UTF-8')
+            if not serial.VERSION.startswith("3."):
 
-            self.fe.teardown()
+                self.__error("REPL needs PySerial v3.x, found %s" % serial.VERSION)
 
-            miniterm.start()
+            else:
 
-            print("\n*** Exit REPL with Ctrl+] ***")
+                from serial.tools.miniterm import Miniterm
+                miniterm = Miniterm(self.fe.con)
 
-            try:
-                miniterm.join(True)
-            except KeyboardInterrupt:
-                pass
+                miniterm.exit_character = unichr(0x1d)
+                miniterm.menu_character = unichr(0x14)
+                miniterm.raw = False
+                miniterm.set_rx_encoding('UTF-8')
+                miniterm.set_tx_encoding('UTF-8')
 
-            # console.cleanup()
-            miniterm.console.cleanup()
-            self.fe.setup()
-            print("")
+                self.fe.teardown()
+
+                miniterm.start()
+
+                print("\n*** Exit REPL with Ctrl+] ***")
+
+                try:
+                    miniterm.join(True)
+                except KeyboardInterrupt:
+                    pass
+
+                # console.cleanup()
+                miniterm.console.cleanup()
+                self.fe.setup()
+                print("")
 
 
 def main():
@@ -502,12 +509,12 @@ def main():
     parser.add_argument("-s", "--script", help="execute commands from file", default=None)
     parser.add_argument("-n", "--noninteractive", help="non interactive mode (don't enter shell)",
                         action="store_true", default=False)
-    parser.add_argument("-o", "--color", help="enable color",
+    parser.add_argument("-o", "--color", help="disable color",
                         action="store_true", default=False)
 
     args = parser.parse_args()
 
-    mpfs = MpFileShell(args.color)
+    mpfs = MpFileShell(not args.color)
 
     if args.command is not None:
 
