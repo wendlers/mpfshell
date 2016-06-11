@@ -30,6 +30,7 @@ Representation of a telnet connection.
 Adapted from micropythons "pyboard.py" implementation.
 """
 
+import sys
 import time
 import telnetlib
 
@@ -42,18 +43,23 @@ class ConTelnet(ConBase):
     def __init__(self, ip, user, password):
         ConBase.__init__(self)
 
-        self.tn = telnetlib.Telnet(ip, timeout=15)
+        if sys.version_info < (3, 0):
+            self.read = self.__read2
+        else:
+            self.read = self.__read3
 
-        if b'Login as:' in self.tn.read_until(b'Login as:'):
+        self.tn = telnetlib.Telnet(ip)
+
+        if b'Login as:' in self.tn.read_until(b'Login as:', timeout=5.0):
             self.tn.write(bytes(user.encode('ascii')) + b"\r\n")
 
-            if b'Password:' in self.tn.read_until(b'Password:', timeout=5):
+            if b'Password:' in self.tn.read_until(b'Password:', timeout=5.0):
 
                 # needed because of internal implementation details of the telnet server
                 time.sleep(0.2)
                 self.tn.write(bytes(password.encode('ascii')) + b"\r\n")
 
-                if b'for more information.' in self.tn.read_until(b'Type "help()" for more information.', timeout=5):
+                if b'for more information.' in self.tn.read_until(b'Type "help()" for more information.', timeout=5.0):
                     self.fifo = deque()
                     return
 
@@ -69,7 +75,7 @@ class ConTelnet(ConBase):
             # the telnet object might not exist yet, so ignore this one
             pass
 
-    def read(self, size=1):
+    def __fill_fifo(self, size):
 
         while len(self.fifo) < size:
 
@@ -82,12 +88,24 @@ class ConTelnet(ConBase):
                 time.sleep(0.25)
                 timeout_count += 1
 
+    def __read2(self, size=1):
+
+        self.__fill_fifo(size)
+
         data = b''
         while len(data) < size and len(self.fifo) > 0:
-            # data += bytes([self.fifo.popleft()])
             data += self.fifo.popleft()
 
-        # print("read:", data)
+        return data
+
+    def __read3(self, size=1):
+
+        self.__fill_fifo(size)
+
+        data = b''
+        while len(data) < size and len(self.fifo) > 0:
+            data += bytes([self.fifo.popleft()])
+
         return data
 
     def write(self, data):

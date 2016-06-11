@@ -1,5 +1,5 @@
 # mpfshell
-2016-06-03, sw@kaltpost.de
+2016-06-11, sw@kaltpost.de
 
 A simple shell based file explorer for ESP8266 and WiPy 
 [Micropython](https://github.com/micropython/micropython) based devices.
@@ -40,7 +40,7 @@ General:
 
 For the shell:
 
-* Python 2.7
+* Python >= 2.7 or Python >= 3.4 
 * The PySerial library >= 3.0 (sudo pip install pyserial)
 * The colorama library >= 0.3.6 (sudo pip install colorama)
 * The websocket-client library >= 0.35.0 (sudo pip install websocket-client)
@@ -49,13 +49,20 @@ __Note__: The tools only works if the REPL is accessible on the device!
 
 ## Installing
 
-To install this tool execute the following:
+To install this tool for __Python 2__, execute the following:
 
 	sudo pip install pyserial
     sudo pip install colorama
     sudo pip install websocket-client
     sudo python setup.py install
-    
+
+To install this tool for __Python 3__, execute the following:
+
+	sudo pip3 install pyserial
+    sudo pip3 install colorama
+    sudo pip3 install websocket-client
+    sudo python3 setup.py install
+
 ## General
 
 The shell supports TAB completion for commands and file names.

@@ -131,7 +131,7 @@ class MpFileExplorer(Pyboard):
         return fqn
 
     def __set_sysname(self):
-        self.sysname = self.eval("os.uname()[0]")
+        self.sysname = self.eval("os.uname()[0]").decode('utf-8')
 
     def close(self):
         Pyboard.close(self)
@@ -228,7 +228,7 @@ class MpFileExplorer(Pyboard):
                 if not len(c):
                     break
 
-                self.exec_("f.write(ubinascii.unhexlify('%s'))" % c)
+                self.exec_("f.write(ubinascii.unhexlify('%s'))" % c.decode('utf-8'))
                 data = data[self.BIN_CHUNK_SIZE:]
 
             self.exec_("f.close()")
@@ -295,6 +295,9 @@ class MpFileExplorer(Pyboard):
             ret = self.exec_("for l in f: sys.stdout.write(l),")
         except PyboardError as e:
             raise RemoteIOError("Device communication failed: %s" % e)
+
+        if isinstance(ret, bytes):
+            ret = ret.decode('utf-8')
 
         return ret
 

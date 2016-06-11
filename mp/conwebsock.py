@@ -58,9 +58,9 @@ class ConWebsock(ConBase, threading.Thread):
 
         self.timeout = 5.0
 
-        if "Password:" in self.read(256):
+        if b'Password:' in self.read(256):
             self.ws.send(password + "\r")
-            if not "WebREPL connected" in self.read(256):
+            if not b'WebREPL connected' in self.read(256):
                 raise ConError()
         else:
             raise ConError()
@@ -91,7 +91,7 @@ class ConWebsock(ConBase, threading.Thread):
 
     def read(self, size=1):
 
-        data = b''
+        data = ''
 
         tstart = time.time()
 
@@ -99,7 +99,7 @@ class ConWebsock(ConBase, threading.Thread):
             if len(self.fifo) > 0:
                 data += self.fifo.popleft()
 
-        return data
+        return data.encode("utf-8")
 
     def write(self, data):
         self.ws.send(data)

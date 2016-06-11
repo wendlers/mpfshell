@@ -66,10 +66,10 @@ class MpFileShell(cmd.Cmd):
 
         if self.color:
             self.intro = '\n' + colorama.Fore.GREEN + \
-                         '** Micropython File Shell v0.6, 2016 sw@kaltpost.de ** ' + \
+                         '** Micropython File Shell v0.7, 2016 sw@kaltpost.de ** ' + \
                          colorama.Fore.RESET + '\n'
         else:
-            self.intro = '\n** Micropython File Shell v0.6, 2016 sw@kaltpost.de **\n'
+            self.intro = '\n** Micropython File Shell v0.7, 2016 sw@kaltpost.de **\n'
 
     def __set_prompt_path(self):
 
@@ -479,8 +479,8 @@ class MpFileShell(cmd.Cmd):
                 from serial.tools.miniterm import Miniterm
                 miniterm = Miniterm(self.fe.con)
 
-                miniterm.exit_character = unichr(0x1d)
-                miniterm.menu_character = unichr(0x14)
+                miniterm.exit_character = chr(0x1d)
+                miniterm.menu_character = chr(0x14)
                 miniterm.raw = False
                 miniterm.set_rx_encoding('UTF-8')
                 miniterm.set_tx_encoding('UTF-8')
@@ -549,10 +549,4 @@ def main():
 
 if __name__ == '__main__':
 
-    # main()
-
-    try:
-        main()
-    except Exception as e:
-        sys.stderr.write(str(e) + "\n")
-        exit(1)
+    main()
