@@ -195,8 +195,8 @@ class MpFileShell(cmd.Cmd):
         """pwd
          Print current remote directory.
          """
-
-        print(self.fe.pwd())
+        if self.__is_open():
+            print(self.fe.pwd())
 
     def do_cd(self, args):
         """cd <TARGET DIR>
