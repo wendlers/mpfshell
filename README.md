@@ -41,7 +41,7 @@ General:
 For the shell:
 
 * Python >= 2.7 or Python >= 3.4 
-* The PySerial library >= 3.0 (sudo pip install pyserial)
+* The PySerial library >= 2.7 (sudo pip install pyserial)
 * The colorama library >= 0.3.6 (sudo pip install colorama)
 * The websocket-client library >= 0.35.0 (sudo pip install websocket-client)
 
