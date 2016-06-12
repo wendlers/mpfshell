@@ -38,6 +38,7 @@ import argparse
 import colorama
 import glob
 
+from mp import version
 from mp.mpfexp import MpFileExplorer
 from mp.mpfexp import RemoteIOError
 from mp.pyboard import PyboardError
@@ -66,10 +67,10 @@ class MpFileShell(cmd.Cmd):
 
         if self.color:
             self.intro = '\n' + colorama.Fore.GREEN + \
-                         '** Micropython File Shell v0.7, 2016 sw@kaltpost.de ** ' + \
+                         '** Micropython File Shell v%s, sw@kaltpost.de ** ' % version.FULL + \
                          colorama.Fore.RESET + '\n'
         else:
-            self.intro = '\n** Micropython File Shell v0.7, 2016 sw@kaltpost.de **\n'
+            self.intro = '\n** Micropython File Shell v%s, sw@kaltpost.de **\n' % version.FULL
 
     def __set_prompt_path(self):
 
@@ -468,38 +469,31 @@ class MpFileShell(cmd.Cmd):
 
         if self.__is_open():
 
-            import serial
+            from mp.term import Term
 
-            if not serial.VERSION.startswith("3."):
+            repl = Term(self.fe.con)
 
-                self.__error("REPL needs PySerial v3.x, found %s" % serial.VERSION)
+            repl.exit_character = chr(0x1d)
+            repl.menu_character = chr(0x14)
+            repl.raw = False
+            repl.set_rx_encoding('UTF-8')
+            repl.set_tx_encoding('UTF-8')
 
-            else:
+            self.fe.teardown()
 
-                from serial.tools.miniterm import Miniterm
-                miniterm = Miniterm(self.fe.con)
+            repl.start()
 
-                miniterm.exit_character = chr(0x1d)
-                miniterm.menu_character = chr(0x14)
-                miniterm.raw = False
-                miniterm.set_rx_encoding('UTF-8')
-                miniterm.set_tx_encoding('UTF-8')
+            print("\n*** Exit REPL with Ctrl+] ***")
 
-                self.fe.teardown()
+            try:
+                repl.join(True)
+            except KeyboardInterrupt:
+                pass
 
-                miniterm.start()
-
-                print("\n*** Exit REPL with Ctrl+] ***")
-
-                try:
-                    miniterm.join(True)
-                except KeyboardInterrupt:
-                    pass
-
-                # console.cleanup()
-                miniterm.console.cleanup()
-                self.fe.setup()
-                print("")
+            # console.cleanup()
+            repl.console.cleanup()
+            self.fe.setup()
+            print("")
 
 
 def main():

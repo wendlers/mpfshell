@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
+from mp import version
 from distutils.core import setup
 
 setup(name='mpfshell',
-      version='0.7',
+      version=version.FULL,
       description='A simple shell based file explorer ESP8266 and WiPy Micropython devices.',
       author='Stefan Wendler',
       author_email='sw@kaltpost.de',
