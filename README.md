@@ -70,6 +70,10 @@ So it totally is worth it pressing TAB-TAB every now and then :-)
     
 ## Shell Usage
 
+__Note:__ Since version 0.7.1, the shell uses caching for file and
+directory names. If this is a problem, caching could be disabled by
+the `--nocache` flag on the command line.
+
 Start the shell with:
 
     mpfshell

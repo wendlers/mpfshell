@@ -40,15 +40,18 @@ class RemoteIOError(IOError):
 
 
 class MpFileExplorer(Pyboard):
+
     BIN_CHUNK_SIZE = 64
 
     def __init__(self, constr):
         """
-        ser:/dev/ttyUSB1,115200
-        tn:192.168.1.101,23
-        ws:192.168.1.102,8080
+        Sopport the following connection strings.
 
-        :param constr:
+        ser:/dev/ttyUSB1,<baudrate>
+        tn:192.168.1.101,<login>,<passwd>
+        ws:192.168.1.102,<passwd>
+
+        :param constr:      Connection string as defined above.
         """
 
         try:
@@ -348,3 +351,92 @@ class MpFileExplorer(Pyboard):
             self.eval("os.mkdir('%s')" % self.__fqn(dir))
         except PyboardError as e:
             raise RemoteIOError("Device communication failed: %s" % e)
+
+
+class MpFileExplorerCaching(MpFileExplorer):
+
+    def __init__(self, constr):
+        MpFileExplorer.__init__(self, constr)
+
+        self.cache = {}
+
+    def __cache(self, path, data):
+
+        self.cache[path] = data
+
+    def __cache_hit(self, path):
+
+        if path in self.cache:
+            return self.cache[path]
+
+        return None
+
+    def ls(self, add_files=True, add_dirs=True, add_details=False):
+
+        hit = self.__cache_hit(self.dir)
+
+        if hit is not None:
+
+            files = []
+
+            if add_dirs:
+                for f in hit:
+                    if f[1] == 'D':
+                        if add_details:
+                            files.append(f)
+                        else:
+                            files.append(f[0])
+
+            if add_files:
+                for f in hit:
+                    if f[1] == 'F':
+                        if add_details:
+                            files.append(f)
+                        else:
+                            files.append(f[0])
+
+            return files
+
+        files = MpFileExplorer.ls(self, add_files, add_dirs, add_details)
+
+        if add_files and add_dirs and add_details:
+            self.__cache(self.dir, files)
+
+        return files
+
+    def put(self, src, dst=None):
+
+        MpFileExplorer.put(self, src, dst)
+
+        hit = self.__cache_hit(self.dir)
+
+        if hit is not None:
+            self.__cache(self.dir, hit + [(dst, 'F')])
+        else:
+            self.__cache(self.dir, [(dst, 'F')])
+
+    def md(self, dir):
+
+        MpFileExplorer.md(self, dir)
+
+        hit = self.__cache_hit(self.dir)
+
+        if hit is not None:
+            self.__cache(self.dir, hit + [(dir, 'D')])
+        else:
+            self.__cache(self.dir, [(dir, 'D')])
+
+    def rm(self, target):
+
+        MpFileExplorer.rm(self, target)
+
+        hit = self.__cache_hit(self.dir)
+
+        if hit is not None:
+            files = []
+
+            for f in hit:
+                if f[0] != target:
+                    files.append(f)
+
+            self.__cache(self.dir, files)

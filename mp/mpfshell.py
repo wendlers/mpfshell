@@ -40,6 +40,7 @@ import glob
 
 from mp import version
 from mp.mpfexp import MpFileExplorer
+from mp.mpfexp import MpFileExplorerCaching
 from mp.mpfexp import RemoteIOError
 from mp.pyboard import PyboardError
 from mp.conbase import ConError
@@ -47,10 +48,11 @@ from mp.conbase import ConError
 
 class MpFileShell(cmd.Cmd):
 
-    def __init__(self, color=False):
+    def __init__(self, color=False, caching=False):
 
         cmd.Cmd.__init__(self)
         self.color = color
+        self.caching = caching
 
         if self.color:
             colorama.init()
@@ -97,7 +99,10 @@ class MpFileShell(cmd.Cmd):
 
         try:
             self.__disconnect()
-            self.fe = MpFileExplorer(port)
+            if self.caching:
+                self.fe = MpFileExplorerCaching(port)
+            else:
+                self.fe = MpFileExplorer(port)
             print("Connected to %s" % self.fe.sysname)
         except PyboardError as e:
             self.__error(str(e[-1]))
@@ -503,12 +508,13 @@ def main():
     parser.add_argument("-s", "--script", help="execute commands from file", default=None)
     parser.add_argument("-n", "--noninteractive", help="non interactive mode (don't enter shell)",
                         action="store_true", default=False)
-    parser.add_argument("-o", "--color", help="disable color",
-                        action="store_true", default=False)
+
+    parser.add_argument("--nocolor", help="disable color", action="store_true", default=False)
+    parser.add_argument("--nocache", help="disable cache", action="store_true", default=False)
 
     args = parser.parse_args()
 
-    mpfs = MpFileShell(not args.color)
+    mpfs = MpFileShell(not args.nocolor, not args.nocache)
 
     if args.command is not None:
 

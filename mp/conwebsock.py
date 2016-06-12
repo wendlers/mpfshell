@@ -102,6 +102,7 @@ class ConWebsock(ConBase, threading.Thread):
         return data.encode("utf-8")
 
     def write(self, data):
+
         self.ws.send(data)
         return len(data)
 
