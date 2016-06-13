@@ -30,6 +30,6 @@ Version information
 
 MAJOR = 0
 MINOR = 7
-PATCH = 1
+PATCH = 2
 
 FULL = "%d.%d.%d" % (MAJOR, MINOR, PATCH)

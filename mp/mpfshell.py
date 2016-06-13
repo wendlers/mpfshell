@@ -37,6 +37,7 @@ import sys
 import argparse
 import colorama
 import glob
+import platform
 
 from mp import version
 from mp.mpfexp import MpFileExplorer
@@ -58,6 +59,7 @@ class MpFileShell(cmd.Cmd):
             colorama.init()
 
         self.fe = None
+        self.repl = None
 
         self.__intro()
         self.__set_prompt_path()
@@ -150,8 +152,15 @@ class MpFileShell(cmd.Cmd):
         if not len(args):
             self.__error("Missing argument: <PORT>")
         else:
-            if not args.startswith("ser:/dev/") and not args.startswith("tn:") and not args.startswith("ws:"):
-                args = "ser:/dev/" + args
+            if not args.startswith("ser:/dev/") \
+                    and not args.startswith("ser:COM") \
+                    and not args.startswith("tn:") \
+                    and not args.startswith("ws:"):
+
+                if platform.system() == "Windows":
+                    args = "ser:" + args
+                else:
+                    args = "ser:/dev/" + args
 
             self.__connect(args)
 
@@ -465,7 +474,7 @@ class MpFileShell(cmd.Cmd):
             except IOError as e:
                 self.__error(str(e))
             except PyboardError as e:
-                self.__error(str(e[-1]))
+                self.__error(str(e))
 
     def do_repl(self, args):
         """repl
@@ -474,29 +483,33 @@ class MpFileShell(cmd.Cmd):
 
         if self.__is_open():
 
-            from mp.term import Term
+            if self.repl is None:
+                from mp.term import Term
+                self.repl = Term(self.fe.con)
+            else:
+                self.repl.serial = self.fe.con
 
-            repl = Term(self.fe.con)
-
-            repl.exit_character = chr(0x1d)
-            repl.menu_character = chr(0x14)
-            repl.raw = False
-            repl.set_rx_encoding('UTF-8')
-            repl.set_tx_encoding('UTF-8')
+            # repl.exit_character = chr(0x1d)
+            self.repl.exit_character = chr(0x11)
+            self.repl.menu_character = chr(0x14)
+            self.repl.raw = False
+            self.repl.set_rx_encoding('UTF-8')
+            self.repl.set_tx_encoding('UTF-8')
 
             self.fe.teardown()
 
-            repl.start()
+            self.repl.start()
 
-            print("\n*** Exit REPL with Ctrl+] ***")
+            print("\n*** Exit REPL with Ctrl+Q ***")
 
             try:
-                repl.join(True)
+                self.repl.join(True)
             except KeyboardInterrupt:
                 pass
 
             # console.cleanup()
-            repl.console.cleanup()
+            self.repl.console.cleanup()
+
             self.fe.setup()
             print("")
 
@@ -535,7 +548,7 @@ def main():
             if len(sline) > 0 and not sline.startswith('#'):
                 script += sline + '\n'
 
-        sys.stdin = io.StringIO(unicode(script))
+        sys.stdin = io.StringIO(script)
         mpfs.intro = ''
         mpfs.prompt = ''
 

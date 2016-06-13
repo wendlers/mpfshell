@@ -26,7 +26,9 @@ Main features:
 * Best of all: it comes with color
 
 
-__Note__: The software is tested on Ubunto 16.04 LTS.
+__Note__: The software is mainly tested on Ubunto 16.04 LTS. However, there is basic Windows support
+(tested with Python 3.5 and PySerial 3.1), but some of the keys (e.g. Tab are note working as 
+expected yet).
 
 ## Requirements
 
@@ -53,14 +55,14 @@ To install this tool for __Python 2__, execute the following:
 
 	sudo pip install pyserial
     sudo pip install colorama
-    sudo pip install websocket-client
+    sudo pip install websocket_client
     sudo python setup.py install
 
 To install this tool for __Python 3__, execute the following:
 
 	sudo pip3 install pyserial
     sudo pip3 install colorama
-    sudo pip3 install websocket-client
+    sudo pip3 install websocket_client
     sudo python3 setup.py install
 
 ## General
