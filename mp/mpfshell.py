@@ -107,7 +107,7 @@ class MpFileShell(cmd.Cmd):
                 self.fe = MpFileExplorer(port)
             print("Connected to %s" % self.fe.sysname)
         except PyboardError as e:
-            self.__error(str(e[-1]))
+            self.__error(str(e))
         except ConError as e:
             self.__error("Failed to open: %s" % port)
         except AttributeError:
@@ -484,23 +484,30 @@ class MpFileShell(cmd.Cmd):
         if self.__is_open():
 
             if self.repl is None:
+
                 from mp.term import Term
                 self.repl = Term(self.fe.con)
+
+                if platform.system() == "Windows":
+                    self.repl.exit_character = chr(0x11)
+                else:
+                    self.repl.exit_character = chr(0x1d)
+
+                self.repl.menu_character = chr(0x14)
+                self.repl.raw = False
+                self.repl.set_rx_encoding('UTF-8')
+                self.repl.set_tx_encoding('UTF-8')
+
             else:
                 self.repl.serial = self.fe.con
 
-            # repl.exit_character = chr(0x1d)
-            self.repl.exit_character = chr(0x11)
-            self.repl.menu_character = chr(0x14)
-            self.repl.raw = False
-            self.repl.set_rx_encoding('UTF-8')
-            self.repl.set_tx_encoding('UTF-8')
-
             self.fe.teardown()
-
             self.repl.start()
 
-            print("\n*** Exit REPL with Ctrl+Q ***")
+            if self.repl.exit_character == 0x11:
+                print("\n*** Exit REPL with Ctrl+Q ***")
+            else:
+                print("\n*** Exit REPL with Ctrl+] ***")
 
             try:
                 self.repl.join(True)
@@ -548,7 +555,11 @@ def main():
             if len(sline) > 0 and not sline.startswith('#'):
                 script += sline + '\n'
 
-        sys.stdin = io.StringIO(script)
+        if sys.version_info < (3, 0):
+            sys.stdin = io.StringIO(unicode(script))
+        else:
+            sys.stdin = io.StringIO(script)
+
         mpfs.intro = ''
         mpfs.prompt = ''
 
