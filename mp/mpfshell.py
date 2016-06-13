@@ -504,7 +504,7 @@ class MpFileShell(cmd.Cmd):
             self.fe.teardown()
             self.repl.start()
 
-            if self.repl.exit_character == 0x11:
+            if self.repl.exit_character == chr(0x11):
                 print("\n*** Exit REPL with Ctrl+Q ***")
             else:
                 print("\n*** Exit REPL with Ctrl+] ***")
