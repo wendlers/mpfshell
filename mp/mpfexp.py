@@ -411,7 +411,8 @@ class MpFileExplorerCaching(MpFileExplorer):
         hit = self.__cache_hit(self.dir)
 
         if hit is not None:
-            self.__cache(self.dir, hit + [(dst, 'F')])
+            if not (dst, 'F') in hit:
+                self.__cache(self.dir, hit + [(dst, 'F')])
         else:
             self.__cache(self.dir, [(dst, 'F')])
 
@@ -422,7 +423,8 @@ class MpFileExplorerCaching(MpFileExplorer):
         hit = self.__cache_hit(self.dir)
 
         if hit is not None:
-            self.__cache(self.dir, hit + [(dir, 'D')])
+            if not (dir, 'D') in hit:
+                self.__cache(self.dir, hit + [(dir, 'D')])
         else:
             self.__cache(self.dir, [(dir, 'D')])
 

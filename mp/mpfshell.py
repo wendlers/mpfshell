@@ -108,7 +108,7 @@ class MpFileShell(cmd.Cmd):
             print("Connected to %s" % self.fe.sysname)
         except PyboardError as e:
             self.__error(str(e))
-        except ConError as e:
+        except ConError:
             self.__error("Failed to open: %s" % port)
         except AttributeError:
             self.__error("Failed to open: %s" % port)
@@ -514,7 +514,6 @@ class MpFileShell(cmd.Cmd):
             except KeyboardInterrupt:
                 pass
 
-            # console.cleanup()
             self.repl.console.cleanup()
 
             self.fe.setup()
@@ -555,10 +554,7 @@ def main():
             if len(sline) > 0 and not sline.startswith('#'):
                 script += sline + '\n'
 
-        if sys.version_info < (3, 0):
-            sys.stdin = io.StringIO(unicode(script))
-        else:
-            sys.stdin = io.StringIO(script)
+        sys.stdin = io.StringIO(script.decode('utf-8'))
 
         mpfs.intro = ''
         mpfs.prompt = ''
