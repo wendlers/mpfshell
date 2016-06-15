@@ -193,8 +193,8 @@ class MpFileExplorer(Pyboard):
 
     def rm(self, target):
 
-        if target not in self.ls():
-            raise RemoteIOError("No such file or directory: '%s'" % self.__fqn(target))
+        #if target not in self.ls():
+        #    raise RemoteIOError("No such file or directory: '%s'" % self.__fqn(target))
 
         try:
             self.eval("os.remove('%s')" % self.__fqn(target))

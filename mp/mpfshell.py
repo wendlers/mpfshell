@@ -22,14 +22,6 @@
 # THE SOFTWARE.
 ##
 
-"""
-2016-03-16, sw@kaltpost.de
-
-Simple file shell for Micropython.
-
-For usage details see the README.md
-"""
-
 import io
 import cmd
 import os
@@ -529,11 +521,11 @@ def main():
                         action="store_true", default=False)
 
     parser.add_argument("--nocolor", help="disable color", action="store_true", default=False)
-    parser.add_argument("--nocache", help="disable cache", action="store_true", default=False)
+    parser.add_argument("--cache", help="enable cache", action="store_true", default=False)
 
     args = parser.parse_args()
 
-    mpfs = MpFileShell(not args.nocolor, not args.nocache)
+    mpfs = MpFileShell(not args.nocolor, args.cache)
 
     if args.command is not None:
 
