@@ -135,7 +135,7 @@ class TestMpfexp:
         with open("file1", "rb") as f:
             assert data == f.read()
 
-        # file with name of existing directory not allowd
+        # file with name of existing directory not allowed
         self.__create_local_file("dir2")
 
         mpfexp.md("dir2")
