@@ -22,13 +22,6 @@
 # THE SOFTWARE.
 ##
 
-"""
-2016-06-04, sw@kaltpost.de
-
-Representation of a telnet connection.
-
-Adapted from micropythons "pyboard.py" implementation.
-"""
 
 import sys
 import time

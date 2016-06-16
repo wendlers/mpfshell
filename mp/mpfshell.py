@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 ##
 
+
 import io
 import cmd
 import os
@@ -401,6 +402,8 @@ class MpFileShell(cmd.Cmd):
                 self.fe.rm(args)
             except IOError as e:
                 self.__error(str(e))
+            except PyboardError:
+                self.__error("Unable to send request to %s" % self.fe.sysname)
 
     def do_mrm(self, args):
         """mrm <SELECTION REGEX>

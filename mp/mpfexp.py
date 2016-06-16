@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 ##
 
+
 import os
 import re
 import binascii
@@ -33,6 +34,7 @@ from mp.conserial import ConSerial
 from mp.contelnet import ConTelnet
 from mp.conwebsock import ConWebsock
 from mp.conbase import ConError
+from mp.retry import retry
 
 
 class RemoteIOError(IOError):
@@ -101,7 +103,7 @@ class MpFileExplorer(Pyboard):
                 login = params[1].strip(" ")
             else:
                 print("")
-                login = raw_input("telnet login : ")
+                login = input("telnet login : ")
 
             if len(params) > 2:
                 passwd = params[2].strip(" ")
@@ -191,15 +193,16 @@ class MpFileExplorer(Pyboard):
 
         return files
 
+    @retry(PyboardError, tries=3, delay=1, backoff=2)
     def rm(self, target):
-
-        #if target not in self.ls():
-        #    raise RemoteIOError("No such file or directory: '%s'" % self.__fqn(target))
 
         try:
             self.eval("os.remove('%s')" % self.__fqn(target))
         except PyboardError as e:
-            raise RemoteIOError("Device communication failed: %s" % e)
+            if "ENOENT" in str(e):
+                raise RemoteIOError("No such file or directory: %s" % target)
+            else:
+                raise e
 
     def mrm(self, pat, verbose=False):
 
@@ -344,8 +347,8 @@ class MpFileExplorer(Pyboard):
 
     def md(self, dir):
 
-        if dir in self.ls():
-            raise RemoteIOError("File or directory already exists: '%s'" % self.__fqn(dir))
+        #if dir in self.ls():
+        #    raise RemoteIOError("File or directory already exists: '%s'" % self.__fqn(dir))
 
         try:
             self.eval("os.mkdir('%s')" % self.__fqn(dir))

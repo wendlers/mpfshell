@@ -22,11 +22,6 @@
 # THE SOFTWARE.
 ##
 
-"""
-2016-06-11, sw@kaltpost.de
-
-Version information
-"""
 
 MAJOR = 0
 MINOR = 7

@@ -22,11 +22,6 @@
 # THE SOFTWARE.
 ##
 
-"""
-2016-06-04, sw@kaltpost.de
-
-Representation of a serial connection
-"""
 
 from serial import Serial
 from mp.conbase import ConBase, ConError

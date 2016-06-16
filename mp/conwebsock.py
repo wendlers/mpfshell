@@ -22,12 +22,6 @@
 # THE SOFTWARE.
 ##
 
-"""
-2016-06-04, sw@kaltpost.de
-
-Representation of a websocket/webrpel connection.
-
-"""
 
 import websocket
 import threading

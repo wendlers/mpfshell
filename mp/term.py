@@ -22,11 +22,6 @@
 # THE SOFTWARE.
 ##
 
-"""
-2016-06-11, sw@kaltpost.de
-
-REPL trough Miniterm
-"""
 
 ## different versions of PySerial come with different Miniterm implementations
 import serial

@@ -22,12 +22,6 @@
 # THE SOFTWARE.
 ##
 
-"""
-2016-06-04, sw@kaltpost.de
-
-Base class defining methods expected to be implemented for a connection
-to the board.
-"""
 
 class ConError(Exception):
     pass
