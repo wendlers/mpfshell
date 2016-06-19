@@ -26,7 +26,6 @@
 import io
 import cmd
 import os
-import sys
 import argparse
 import colorama
 import glob

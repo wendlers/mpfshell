@@ -23,7 +23,6 @@
 ##
 
 
-## different versions of PySerial come with different Miniterm implementations
 import serial
 
 if serial.VERSION.startswith("2."):
