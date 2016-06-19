@@ -25,6 +25,7 @@
 
 import os
 import re
+import sys
 import sre_constants
 import binascii
 import getpass
@@ -364,8 +365,21 @@ class MpFileExplorer(Pyboard):
 
             self.exec_("f = open('%s', 'w')" % self.__fqn(dst))
 
-            for l in lines:
-                self.exec_("f.write('%s')" % l.encode("string-escape"))
+            if sys.version_info < (3, 0):
+
+                for l in lines:
+                    self.exec_("f.write('%s')" % l)
+
+            else:
+
+                lines = lines.replace('\n\r', '\n')
+                lines = lines.replace('\r\n', '\n')
+                lines = lines.replace('\r', '\n')
+
+                for l in lines.split('\n'):
+                    l_enc = l.encode("unicode-escape")
+                    l_enc += b'\n'
+                    self.exec_("f.write(%s)" % l_enc)
 
             self.exec_("f.close()")
 
