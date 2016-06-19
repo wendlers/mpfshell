@@ -25,8 +25,10 @@
 
 import os
 import re
+import sre_constants
 import binascii
 import getpass
+
 
 from mp.pyboard import Pyboard
 from mp.pyboard import PyboardError
@@ -273,15 +275,20 @@ class MpFileExplorer(Pyboard):
 
     def mput(self, src_dir, pat, verbose=False):
 
-        find = re.compile(pat)
-        files = os.listdir(src_dir)
+        try:
 
-        for f in files:
-            if os.path.isfile(f) and find.match(f):
-                if verbose:
-                    print(" * put %s" % f)
+            find = re.compile(pat)
+            files = os.listdir(src_dir)
 
-                self.put(os.path.join(src_dir, f), f)
+            for f in files:
+                if os.path.isfile(f) and find.match(f):
+                    if verbose:
+                        print(" * put %s" % f)
+
+                    self.put(os.path.join(src_dir, f), f)
+
+        except sre_constants.error as e:
+            raise RemoteIOError("Error in regular expression: %s" % e)
 
     @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
     def get(self, src, dst=None):
@@ -316,15 +323,20 @@ class MpFileExplorer(Pyboard):
 
     def mget(self, dst_dir, pat, verbose=False):
 
-        files = self.ls(add_dirs=False)
-        find = re.compile(pat)
+        try:
 
-        for f in files:
-            if find.match(f):
-                if verbose:
-                    print(" * get %s" % f)
+            files = self.ls(add_dirs=False)
+            find = re.compile(pat)
 
-                self.get(f, dst=os.path.join(dst_dir, f))
+            for f in files:
+                if find.match(f):
+                    if verbose:
+                        print(" * get %s" % f)
+
+                    self.get(f, dst=os.path.join(dst_dir, f))
+
+        except sre_constants.error as e:
+            raise RemoteIOError("Error in regular expression: %s" % e)
 
     @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
     def gets(self, src):

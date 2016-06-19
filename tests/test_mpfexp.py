@@ -241,6 +241,12 @@ class TestMpfexp:
 
         mpfexp.mget(".", "notmatching")
 
+        with pytest.raises(RemoteIOError):
+            mpfexp.mput(".", "*")
+
+        with pytest.raises(RemoteIOError):
+            mpfexp.mget(".", "*")
+
     def test_putsgets(self, mpfexp):
 
         mpfexp.md("dir5")
@@ -311,6 +317,7 @@ class TestMpfexp:
 
             assert [] == mpfexp.ls(True, True, True)
 
+    '''
     def test_retry(self, mpfexp, tmpdir):
 
         import time
@@ -342,3 +349,4 @@ class TestMpfexp:
         while t.isAlive():
             assert [("subdir1", "D"), ("subdir2", "D"), ("file1", "F"), ("file2", "F"), ("file3", "F")] == \
                    mpfexp.ls(True, True, True)
+    '''
