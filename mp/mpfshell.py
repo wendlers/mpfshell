@@ -31,6 +31,8 @@ import argparse
 import colorama
 import glob
 import platform
+import sys
+import serial
 
 from mp import version
 from mp.mpfexp import MpFileExplorer
@@ -68,6 +70,9 @@ class MpFileShell(cmd.Cmd):
                          colorama.Fore.RESET + '\n'
         else:
             self.intro = '\n** Micropython File Shell v%s, sw@kaltpost.de **\n' % version.FULL
+
+        self.intro += '-- Running on Python %d.%d using PySerial %s --\n' \
+                       % (sys.version_info[0], sys.version_info[1], serial.VERSION)
 
     def __set_prompt_path(self):
 
