@@ -476,6 +476,14 @@ class MpFileShell(cmd.Cmd):
         Enter Micropython REPL.
         """
 
+        import serial
+
+        ver = serial.VERSION.split(".")
+
+        if int(ver[0]) < 2  or (int(ver[0]) == 2 and int(ver[1]) < 7):
+            self.__error("REPL needs PySerial version >= 2.7, found %s" % serial.VERSION)
+            return
+
         if self.__is_open():
 
             if self.repl is None:
@@ -506,7 +514,7 @@ class MpFileShell(cmd.Cmd):
 
             try:
                 self.repl.join(True)
-            except KeyboardInterrupt:
+            except Exception:
                 pass
 
             self.repl.console.cleanup()
