@@ -44,14 +44,15 @@ class RemoteIOError(IOError):
 class MpFileExplorer(Pyboard):
 
     BIN_CHUNK_SIZE = 64
+    MAX_TRIES = 3
 
     def __init__(self, constr):
         """
-        Sopport the following connection strings.
+        Supports the following connection strings.
 
-        ser:/dev/ttyUSB1,<baudrate>
-        tn:192.168.1.101,<login>,<passwd>
-        ws:192.168.1.102,<passwd>
+            ser:/dev/ttyUSB1,<baudrate>
+            tn:192.168.1.101,<login>,<passwd>
+            ws:192.168.1.102,<passwd>
 
         :param constr:      Connection string as defined above.
         """
@@ -92,7 +93,6 @@ class MpFileExplorer(Pyboard):
             else:
                 baudrate = 115200
 
-            # print("serial connection to: %s, %d" % (port, baudrate))
             con = ConSerial(port=port, baudrate=baudrate)
 
         elif proto.strip(" ") == "tn":
@@ -139,10 +139,12 @@ class MpFileExplorer(Pyboard):
         self.sysname = self.eval("os.uname()[0]").decode('utf-8')
 
     def close(self):
+
         Pyboard.close(self)
         self.dir = "/"
 
     def teardown(self):
+
         self.exit_raw_repl()
         self.sysname = None
 
@@ -152,6 +154,7 @@ class MpFileExplorer(Pyboard):
         self.exec_("import os, sys, ubinascii")
         self.__set_sysname()
 
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
     def ls(self, add_files=True, add_dirs=True, add_details=False):
 
         files = []
@@ -164,36 +167,54 @@ class MpFileExplorer(Pyboard):
             if add_dirs:
                 for f in tmp:
                     try:
+
+                        # if it is a dir, it could be listed with "os.listdir"
                         self.eval("os.listdir('%s/%s')" % (self.dir, f))
                         if add_details:
                             files.append((f, 'D'))
                         else:
                             files.append(f)
-                    except PyboardError:
-                        if self.sysname == "WiPy" and self.dir == "/":
-                            # for the WiPy, assume that all entries in the root of th FS
-                            # are mount-points, and thus treat them as directories
-                            if add_details:
-                                files.append((f, 'D'))
-                            else:
-                                files.append(f)
+
+                    except PyboardError as e:
+
+                        if "ENOENT" in str(e):
+                            # this was not a dir
+                            if self.sysname == "WiPy" and self.dir == "/":
+                                # for the WiPy, assume that all entries in the root of th FS
+                                # are mount-points, and thus treat them as directories
+                                if add_details:
+                                    files.append((f, 'D'))
+                                else:
+                                    files.append(f)
+                        else:
+                            raise e
 
             if add_files and not (self.sysname == "WiPy" and self.dir == "/"):
                 for f in tmp:
                     try:
-                        self.eval("os.listdir('%s/%s')" % (self.dir, f))
-                    except PyboardError:
-                        if add_details:
-                            files.append((f, 'F'))
-                        else:
-                            files.append(f)
 
-        except PyboardError as e:
-            raise RemoteIOError("Device communication failed: %s" % e)
+                        # if it is a file, "os.listdir" must fail
+                        self.eval("os.listdir('%s/%s')" % (self.dir, f))
+
+                    except PyboardError as e:
+
+                        if "ENOENT" in str(e):
+                            if add_details:
+                                files.append((f, 'F'))
+                            else:
+                                files.append(f)
+                        else:
+                            raise e
+
+        except Exception  as e:
+            if "ENOENT" in str(e):
+                raise RemoteIOError("No such directory: %s" % self.dir)
+            else:
+                raise PyboardError(e)
 
         return files
 
-    @retry(PyboardError, tries=3, delay=1, backoff=2)
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
     def rm(self, target):
 
         try:
@@ -201,6 +222,8 @@ class MpFileExplorer(Pyboard):
         except PyboardError as e:
             if "ENOENT" in str(e):
                 raise RemoteIOError("No such file or directory: %s" % target)
+            elif "EACCES" in str(e):
+                raise RemoteIOError("Directory not empty: %s" % target)
             else:
                 raise e
 
@@ -216,6 +239,7 @@ class MpFileExplorer(Pyboard):
 
                 self.rm(f)
 
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
     def put(self, src, dst=None):
 
         f = open(src, "rb")
@@ -240,7 +264,12 @@ class MpFileExplorer(Pyboard):
             self.exec_("f.close()")
 
         except PyboardError as e:
-            raise RemoteIOError("Device communication failed: %s" % e)
+            if "ENOENT" in str(e):
+                raise RemoteIOError("Failed to create file: %s" % dst)
+            elif "EACCES" in str(e):
+                raise RemoteIOError("Existing directory: %s" % dst)
+            else:
+                raise e
 
     def mput(self, src_dir, pat, verbose=False):
 
@@ -254,6 +283,7 @@ class MpFileExplorer(Pyboard):
 
                 self.put(os.path.join(src_dir, f), f)
 
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
     def get(self, src, dst=None):
 
         if src not in self.ls():
@@ -265,6 +295,7 @@ class MpFileExplorer(Pyboard):
         f = open(dst, "wb")
 
         try:
+
             self.exec_("f = open('%s', 'rb')" % self.__fqn(src))
             ret = self.exec_(
                 "while True:\r\n"
@@ -273,8 +304,12 @@ class MpFileExplorer(Pyboard):
                 "    break\r\n"
                 "  sys.stdout.write(c)\r\n" % self.BIN_CHUNK_SIZE
             )
+
         except PyboardError as e:
-            raise RemoteIOError("Device communication failed: %s" % e)
+            if "ENOENT" in str(e):
+                raise RemoteIOError("Failed to read file: %s" % src)
+            else:
+                raise e
 
         f.write(binascii.unhexlify(ret))
         f.close()
@@ -291,22 +326,26 @@ class MpFileExplorer(Pyboard):
 
                 self.get(f, dst=os.path.join(dst_dir, f))
 
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
     def gets(self, src):
 
-        if src not in self.ls():
-            raise RemoteIOError("No such file or directory: '%s'" % self.__fqn(src))
-
         try:
+
             self.exec_("f = open('%s', 'r')" % self.__fqn(src))
             ret = self.exec_("for l in f: sys.stdout.write(l),")
+
         except PyboardError as e:
-            raise RemoteIOError("Device communication failed: %s" % e)
+            if "ENOENT" in str(e):
+                raise RemoteIOError("Failed to read file: %s" % src)
+            else:
+                raise e
 
         if isinstance(ret, bytes):
             ret = ret.decode('utf-8')
 
         return ret
 
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
     def puts(self, dst, lines):
 
         try:
@@ -319,41 +358,52 @@ class MpFileExplorer(Pyboard):
             self.exec_("f.close()")
 
         except PyboardError as e:
-            raise RemoteIOError("Device communication failed: %s" % e)
+            if "ENOENT" in str(e):
+                raise RemoteIOError("Failed to create file: %s" % dst)
+            elif "EACCES" in str(e):
+                raise RemoteIOError("Existing directory: %s" % dst)
+            else:
+                raise e
 
-    def size(self, target):
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
+    def cd(self, target):
 
-        return len(self.gets(target))
-
-    def cd(self, dir):
-
-        if dir.startswith("/"):
-            tmp_dir = dir
-        elif dir == "..":
+        if target.startswith("/"):
+            tmp_dir = target
+        elif target == "..":
             tmp_dir, _ = os.path.split(self.dir)
         else:
-            tmp_dir = self.__fqn(dir)
+            tmp_dir = self.__fqn(target)
 
         # see if the new dir exists
         try:
+
             self.eval("os.listdir('%s')" % tmp_dir)
             self.dir = tmp_dir
-        except PyboardError:
-            raise RemoteIOError("Invalid directory: %s" % dir)
+
+        except PyboardError as e:
+            if "ENOENT" in str(e):
+                raise RemoteIOError("No such directory: %s" % target)
+            else:
+                raise e
 
     def pwd(self):
-
         return self.dir
 
-    def md(self, dir):
-
-        #if dir in self.ls():
-        #    raise RemoteIOError("File or directory already exists: '%s'" % self.__fqn(dir))
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
+    def md(self, target):
 
         try:
-            self.eval("os.mkdir('%s')" % self.__fqn(dir))
+
+            self.eval("os.mkdir('%s')" % self.__fqn(target))
+
         except PyboardError as e:
-            raise RemoteIOError("Device communication failed: %s" % e)
+            if "ENOENT" in str(e):
+                raise RemoteIOError("Invalid directory name: %s" % target)
+            elif "EEXIST" in str(e):
+                raise RemoteIOError("File or directory exists: %s" % target)
+            else:
+                raise e
 
 
 class MpFileExplorerCaching(MpFileExplorer):

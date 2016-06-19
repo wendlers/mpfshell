@@ -163,6 +163,9 @@ class TestMpfexp:
             mpfexp.get("file99")
 
         with pytest.raises(RemoteIOError):
+            mpfexp.get("dir2")
+
+        with pytest.raises(RemoteIOError):
             mpfexp.get("dir2/file99")
 
         # fail to get to non-existing dir
@@ -216,3 +219,126 @@ class TestMpfexp:
 
         with pytest.raises(RemoteIOError):
             mpfexp.rm("dir3")
+
+    def test_mputget(self, mpfexp, tmpdir):
+
+        os.chdir(str(tmpdir))
+
+        self.__create_local_file("file20")
+        self.__create_local_file("file21")
+        self.__create_local_file("file22")
+
+        mpfexp.md("dir4")
+        mpfexp.cd("dir4")
+        mpfexp.mput(".", "file\.*")
+
+        assert [("file20", "F"), ("file21", "F"), ("file22", "F")] == mpfexp.ls(True, True, True)
+
+        os.mkdir("mget")
+        os.chdir(os.path.join(str(tmpdir), "mget"))
+        mpfexp.mget(".", "file\.*")
+        assert ["file20", "file21", "file22"] == os.listdir(".")
+
+        mpfexp.mget(".", "notmatching")
+
+    def test_putsgets(self, mpfexp):
+
+        mpfexp.md("dir5")
+        mpfexp.cd("dir5")
+
+        data = "Some random data"
+
+        mpfexp.puts("file1", data)
+        assert data == mpfexp.gets("file1")
+
+        mpfexp.cd("/")
+
+        with pytest.raises(RemoteIOError):
+            mpfexp.puts("invalid/file1", "don't care")
+
+        with pytest.raises(RemoteIOError):
+            mpfexp.puts("dir5", "don't care")
+
+        mpfexp.puts("dir5/file1", data)
+
+        with pytest.raises(RemoteIOError):
+            mpfexp.gets("dir5")
+
+        with pytest.raises(RemoteIOError):
+            mpfexp.gets("dir5/file99")
+
+    def test_bigfile(self, mpfexp, tmpdir):
+
+        os.chdir(str(tmpdir))
+
+        data = b"\xab" * (1024 * 40)
+        self.__create_local_file("file30", data)
+
+        mpfexp.md("dir6")
+        mpfexp.cd("dir6")
+        mpfexp.put("file30", "file1")
+
+        mpfexp.get("file1")
+
+        with open("file1", "rb") as f:
+            assert data == f.read()
+
+    def test_stress(self, mpfexp, tmpdir):
+
+        os.chdir(str(tmpdir))
+        mpfexp.md("dir7")
+        mpfexp.cd("dir7")
+
+        for i in range(100):
+
+            data = b"\xab" * (1024 * 1)
+            self.__create_local_file("file40", data)
+
+            mpfexp.put("file40", "file1")
+            assert [("file1", "F")] == mpfexp.ls(True, True, True)
+
+            mpfexp.put("file40", "file2")
+            assert [("file1", "F"), ("file2", "F")] == mpfexp.ls(True, True, True)
+
+            mpfexp.md("subdir1")
+            assert [("subdir1", "D"), ("file1", "F"), ("file2", "F")] == mpfexp.ls(True, True, True)
+
+            mpfexp.rm("file1")
+            mpfexp.rm("file2")
+            mpfexp.cd("subdir1")
+            mpfexp.cd("..")
+            mpfexp.rm("subdir1")
+
+            assert [] == mpfexp.ls(True, True, True)
+
+    def test_retry(self, mpfexp, tmpdir):
+
+        import time
+        import threading
+
+        os.chdir(str(tmpdir))
+
+        mpfexp.md("dir8")
+        mpfexp.cd("dir8")
+        mpfexp.md("subdir1")
+        mpfexp.md("subdir2")
+
+        self.__create_local_file("file50")
+        mpfexp.put("file50", "file1")
+        mpfexp.put("file50", "file2")
+        mpfexp.put("file50", "file3")
+
+        def garbage_emitter():
+
+            for i in range(10):
+                mpfexp.exec_("print(1, 2, 3)")
+                time.sleep(0.1)
+
+        t = threading.Thread(target=garbage_emitter)
+        t.start()
+
+        assert t.isAlive()
+
+        while t.isAlive():
+            assert [("subdir1", "D"), ("subdir2", "D"), ("file1", "F"), ("file2", "F"), ("file3", "F")] == \
+                   mpfexp.ls(True, True, True)
