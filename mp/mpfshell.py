@@ -486,7 +486,7 @@ class MpFileShell(cmd.Cmd):
 
         ver = serial.VERSION.split(".")
 
-        if int(ver[0]) < 2  or (int(ver[0]) == 2 and int(ver[1]) < 7):
+        if int(ver[0]) < 2 or (int(ver[0]) == 2 and int(ver[1]) < 7):
             self.__error("REPL needs PySerial version >= 2.7, found %s" % serial.VERSION)
             return
 
@@ -502,8 +502,7 @@ class MpFileShell(cmd.Cmd):
                 else:
                     self.repl.exit_character = chr(0x1d)
 
-                self.repl.menu_character = chr(0x14)
-                self.repl.raw = False
+                self.repl.raw = True
                 self.repl.set_rx_encoding('UTF-8')
                 self.repl.set_tx_encoding('UTF-8')
 
