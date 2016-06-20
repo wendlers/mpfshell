@@ -32,6 +32,7 @@ import glob
 import platform
 import sys
 import serial
+import logging
 
 from mp import version
 from mp.mpfexp import MpFileExplorer
@@ -132,6 +133,7 @@ class MpFileShell(cmd.Cmd):
         """exit
         Exit this shell.
         """
+        self.__disconnect()
 
         return True
 
@@ -538,7 +540,21 @@ def main():
     parser.add_argument("--nocolor", help="disable color", action="store_true", default=False)
     parser.add_argument("--cache", help="enable cache", action="store_true", default=False)
 
+    parser.add_argument("--logfile", help="write log to file", default=None)
+    parser.add_argument("--loglevel", help="loglevel (CRITICAL, ERROR, WARNING, INFO, DEBUG)", default="INFO")
+
     args = parser.parse_args()
+
+    format = '%(asctime)s\t%(levelname)s\t%(message)s'
+
+    if args.logfile is not None:
+        logging.basicConfig(format=format, filename=args.logfile,level=args.loglevel)
+    else:
+        logging.basicConfig(format=format, level=logging.CRITICAL)
+
+    logging.info('Micropython File Shell v%s started' % version.FULL)
+    logging.info('Running on Python %d.%d using PySerial %s' \
+              % (sys.version_info[0], sys.version_info[1], serial.VERSION))
 
     mpfs = MpFileShell(not args.nocolor, args.cache)
 

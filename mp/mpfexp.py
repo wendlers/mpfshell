@@ -29,7 +29,7 @@ import sys
 import sre_constants
 import binascii
 import getpass
-
+import logging
 
 from mp.pyboard import Pyboard
 from mp.pyboard import PyboardError
@@ -157,7 +157,7 @@ class MpFileExplorer(Pyboard):
         self.exec_("import os, sys, ubinascii")
         self.__set_sysname()
 
-    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
     def ls(self, add_files=True, add_dirs=True, add_details=False):
 
         files = []
@@ -217,7 +217,7 @@ class MpFileExplorer(Pyboard):
 
         return files
 
-    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
     def rm(self, target):
 
         try:
@@ -242,7 +242,7 @@ class MpFileExplorer(Pyboard):
 
                 self.rm(f)
 
-    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
     def put(self, src, dst=None):
 
         f = open(src, "rb")
@@ -291,7 +291,7 @@ class MpFileExplorer(Pyboard):
         except sre_constants.error as e:
             raise RemoteIOError("Error in regular expression: %s" % e)
 
-    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
     def get(self, src, dst=None):
 
         if src not in self.ls():
@@ -339,7 +339,7 @@ class MpFileExplorer(Pyboard):
         except sre_constants.error as e:
             raise RemoteIOError("Error in regular expression: %s" % e)
 
-    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
     def gets(self, src):
 
         try:
@@ -358,7 +358,7 @@ class MpFileExplorer(Pyboard):
 
         return ret
 
-    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
     def puts(self, dst, lines):
 
         try:
@@ -391,7 +391,7 @@ class MpFileExplorer(Pyboard):
             else:
                 raise e
 
-    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
     def cd(self, target):
 
         if target.startswith("/"):
@@ -416,7 +416,7 @@ class MpFileExplorer(Pyboard):
     def pwd(self):
         return self.dir
 
-    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2)
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
     def md(self, target):
 
         try:

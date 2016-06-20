@@ -26,6 +26,7 @@
 import websocket
 import threading
 import time
+import logging
 
 from collections import deque
 from mp.conbase import ConBase, ConError
@@ -43,7 +44,7 @@ class ConWebsock(ConBase, threading.Thread):
         self.fifo = deque()
         self.fifo_lock = threading.Lock()
 
-        websocket.enableTrace(False)
+        websocket.enableTrace(logging.root.getEffectiveLevel() < logging.INFO)
         self.ws = websocket.WebSocketApp("ws://%s:8266" % ip,
                                          on_message=self.on_message,
                                          on_error=self.on_error,
@@ -62,6 +63,8 @@ class ConWebsock(ConBase, threading.Thread):
 
         self.timeout = 1.0
 
+        logging.info("websocket connected to ws://%s:8266" % ip)
+
     def run(self):
         self.ws.run_forever()
 
@@ -71,27 +74,32 @@ class ConWebsock(ConBase, threading.Thread):
     def on_message(self, ws, message):
         self.fifo.extend(message)
 
-        self.fifo_lock.acquire(False)
-        self.fifo_lock.release()
+        try:
+            self.fifo_lock.release()
+        except:
+            pass
 
     def on_error(self, ws, error):
-        # print("WS ERROR: %s" % error)
-        pass
+        logging.error("websocket error: %s" % error)
 
     def on_close(self, ws):
-        pass
+        logging.info("websocket closed")
 
     def close(self):
         try:
             self.ws.close()
 
-            self.fifo_lock.acquire(False)
-            self.fifo_lock.release()
+            try:
+                self.fifo_lock.release()
+            except:
+                pass
 
             self.join()
         except Exception:
-            self.fifo_lock.acquire(False)
-            self.fifo_lock.release()
+            try:
+                self.fifo_lock.release()
+            except:
+                pass
 
     def read(self, size=1, blocking=True):
 
