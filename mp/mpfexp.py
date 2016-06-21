@@ -129,7 +129,7 @@ class MpFileExplorer(Pyboard):
 
         return con
 
-    def __fqn(self, name):
+    def _fqn(self, name):
 
         if self.dir.endswith("/"):
             fqn = self.dir + name
@@ -221,7 +221,7 @@ class MpFileExplorer(Pyboard):
     def rm(self, target):
 
         try:
-            self.eval("os.remove('%s')" % self.__fqn(target))
+            self.eval("os.remove('%s')" % self._fqn(target))
         except PyboardError as e:
             if "ENOENT" in str(e):
                 raise RemoteIOError("No such file or directory: %s" % target)
@@ -254,7 +254,7 @@ class MpFileExplorer(Pyboard):
 
         try:
 
-            self.exec_("f = open('%s', 'wb')" % self.__fqn(dst))
+            self.exec_("f = open('%s', 'wb')" % self._fqn(dst))
 
             while True:
                 c = binascii.hexlify(data[:self.BIN_CHUNK_SIZE])
@@ -295,7 +295,7 @@ class MpFileExplorer(Pyboard):
     def get(self, src, dst=None):
 
         if src not in self.ls():
-            raise RemoteIOError("No such file or directory: '%s'" % self.__fqn(src))
+            raise RemoteIOError("No such file or directory: '%s'" % self._fqn(src))
 
         if dst is None:
             dst = src
@@ -304,7 +304,7 @@ class MpFileExplorer(Pyboard):
 
         try:
 
-            self.exec_("f = open('%s', 'rb')" % self.__fqn(src))
+            self.exec_("f = open('%s', 'rb')" % self._fqn(src))
             ret = self.exec_(
                 "while True:\r\n"
                 "  c = ubinascii.hexlify(f.read(%s))\r\n"
@@ -344,7 +344,7 @@ class MpFileExplorer(Pyboard):
 
         try:
 
-            self.exec_("f = open('%s', 'r')" % self.__fqn(src))
+            self.exec_("f = open('%s', 'r')" % self._fqn(src))
             ret = self.exec_("for l in f: sys.stdout.write(l),")
 
         except PyboardError as e:
@@ -363,7 +363,7 @@ class MpFileExplorer(Pyboard):
 
         try:
 
-            self.exec_("f = open('%s', 'w')" % self.__fqn(dst))
+            self.exec_("f = open('%s', 'w')" % self._fqn(dst))
 
             if sys.version_info < (3, 0):
 
@@ -399,7 +399,7 @@ class MpFileExplorer(Pyboard):
         elif target == "..":
             tmp_dir, _ = os.path.split(self.dir)
         else:
-            tmp_dir = self.__fqn(target)
+            tmp_dir = self._fqn(target)
 
         # see if the new dir exists
         try:
@@ -421,7 +421,7 @@ class MpFileExplorer(Pyboard):
 
         try:
 
-            self.eval("os.mkdir('%s')" % self.__fqn(target))
+            self.eval("os.mkdir('%s')" % self._fqn(target))
 
         except PyboardError as e:
             if "ENOENT" in str(e):
@@ -441,11 +441,13 @@ class MpFileExplorerCaching(MpFileExplorer):
 
     def __cache(self, path, data):
 
+        logging.debug("caching '%s': %s" % (path, data))
         self.cache[path] = data
 
     def __cache_hit(self, path):
 
         if path in self.cache:
+            logging.debug("cache hit for '%s': %s" % (path, self.cache[path]))
             return self.cache[path]
 
         return None
@@ -487,37 +489,48 @@ class MpFileExplorerCaching(MpFileExplorer):
 
         MpFileExplorer.put(self, src, dst)
 
-        hit = self.__cache_hit(self.dir)
+        if dst is None:
+            dst = src
+
+        path = os.path.split(self._fqn(dst))
+        newitm = path[-1]
+        parent = path[:-1][0]
+
+        hit = self.__cache_hit(parent)
 
         if hit is not None:
             if not (dst, 'F') in hit:
-                self.__cache(self.dir, hit + [(dst, 'F')])
-        else:
-            self.__cache(self.dir, [(dst, 'F')])
+                self.__cache(parent, hit + [(newitm, 'F')])
 
     def md(self, dir):
 
         MpFileExplorer.md(self, dir)
 
-        hit = self.__cache_hit(self.dir)
+        path = os.path.split(self._fqn(dir))
+        newitm = path[-1]
+        parent = path[:-1][0]
+
+        hit = self.__cache_hit(parent)
 
         if hit is not None:
             if not (dir, 'D') in hit:
-                self.__cache(self.dir, hit + [(dir, 'D')])
-        else:
-            self.__cache(self.dir, [(dir, 'D')])
+                self.__cache(parent, hit + [(newitm, 'D')])
 
     def rm(self, target):
 
         MpFileExplorer.rm(self, target)
 
-        hit = self.__cache_hit(self.dir)
+        path = os.path.split(self._fqn(target))
+        rmitm = path[-1]
+        parent = path[:-1][0]
+
+        hit = self.__cache_hit(parent)
 
         if hit is not None:
             files = []
 
             for f in hit:
-                if f[0] != target:
+                if f[0] != rmitm:
                     files.append(f)
 
-            self.__cache(self.dir, files)
+            self.__cache(parent, files)

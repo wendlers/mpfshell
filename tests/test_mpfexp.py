@@ -232,12 +232,12 @@ class TestMpfexp:
         mpfexp.cd("dir4")
         mpfexp.mput(".", "file\.*")
 
-        assert [("file20", "F"), ("file21", "F"), ("file22", "F")] == mpfexp.ls(True, True, True)
+        assert [("file20", "F"), ("file21", "F"), ("file22", "F")] == sorted(mpfexp.ls(True, True, True))
 
         os.mkdir("mget")
         os.chdir(os.path.join(str(tmpdir), "mget"))
         mpfexp.mget(".", "file\.*")
-        assert ["file20", "file21", "file22"] == os.listdir(".")
+        assert ["file20", "file21", "file22"] == sorted(os.listdir("."))
 
         mpfexp.mget(".", "notmatching")
 
@@ -249,7 +249,7 @@ class TestMpfexp:
 
     def test_putsgets(self, mpfexp):
 
-        # mpfexp.md("dir5")
+        mpfexp.md("dir5")
         mpfexp.cd("dir5")
 
         data = "Some random data"
@@ -316,37 +316,3 @@ class TestMpfexp:
             mpfexp.rm("subdir1")
 
             assert [] == mpfexp.ls(True, True, True)
-
-    '''
-    def test_retry(self, mpfexp, tmpdir):
-
-        import time
-        import threading
-
-        os.chdir(str(tmpdir))
-
-        mpfexp.md("dir8")
-        mpfexp.cd("dir8")
-        mpfexp.md("subdir1")
-        mpfexp.md("subdir2")
-
-        self.__create_local_file("file50")
-        mpfexp.put("file50", "file1")
-        mpfexp.put("file50", "file2")
-        mpfexp.put("file50", "file3")
-
-        def garbage_emitter():
-
-            for i in range(10):
-                mpfexp.exec_("print(1, 2, 3)")
-                time.sleep(0.1)
-
-        t = threading.Thread(target=garbage_emitter)
-        t.start()
-
-        assert t.isAlive()
-
-        while t.isAlive():
-            assert [("subdir1", "D"), ("subdir2", "D"), ("file1", "F"), ("file2", "F"), ("file3", "F")] == \
-                   mpfexp.ls(True, True, True)
-    '''

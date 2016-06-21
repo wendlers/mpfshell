@@ -59,6 +59,7 @@ def mpsetup(request):
     if not request.config.getoption("--nosetup"):
 
         fe = MpFileExplorer(request.config.getoption("--testcon"))
+        '''
         fe.exec_("""
 def rm(path):
     files = os.listdir(path)
@@ -71,8 +72,24 @@ def rm(path):
                 os.remove(path + '/' +  f)
 rm('')
         """)
+        '''
 
-        fe.close()
+        fe.puts("pytest.py", """
+def rm(path):
+    import os
+    files = os.listdir(path)
+    for f in files:
+        if f not in ['boot.py', 'port_config.py']:
+            try:
+                os.remove(path + '/' +  f)
+            except:
+                rm(path + '/' + f)
+                os.remove(path + '/' +  f)
+""")
+
+        fe.exec_("import pytest")
+        fe.exec_("pytest.rm('')")
+        # fe.close()
 
 @pytest.fixture(scope="function")
 def mpfexp(request):
@@ -96,3 +113,8 @@ def mpfexp(request):
     request.addfinalizer(teardown)
 
     return _mpfexp_inst
+
+# enable logging of modules under test
+import logging
+logging.basicConfig(format='%(asctime)s\t%(levelname)s\t%(message)s',
+                    filename='test.log', level=logging.DEBUG)

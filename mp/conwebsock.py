@@ -44,7 +44,7 @@ class ConWebsock(ConBase, threading.Thread):
         self.fifo = deque()
         self.fifo_lock = threading.Lock()
 
-        websocket.enableTrace(logging.root.getEffectiveLevel() < logging.INFO)
+        # websocket.enableTrace(logging.root.getEffectiveLevel() < logging.INFO)
         self.ws = websocket.WebSocketApp("ws://%s:8266" % ip,
                                          on_message=self.on_message,
                                          on_error=self.on_error,
