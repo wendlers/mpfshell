@@ -59,21 +59,6 @@ def mpsetup(request):
     if not request.config.getoption("--nosetup"):
 
         fe = MpFileExplorer(request.config.getoption("--testcon"))
-        '''
-        fe.exec_("""
-def rm(path):
-    files = os.listdir(path)
-    for f in files:
-        if f not in ['boot.py', 'port_config.py']:
-            try:
-                os.remove(path + '/' +  f)
-            except:
-                rm(path + '/' + f)
-                os.remove(path + '/' +  f)
-rm('')
-        """)
-        '''
-
         fe.puts("pytest.py", """
 def rm(path):
     import os
@@ -89,7 +74,7 @@ def rm(path):
 
         fe.exec_("import pytest")
         fe.exec_("pytest.rm('')")
-        # fe.close()
+
 
 @pytest.fixture(scope="function")
 def mpfexp(request):

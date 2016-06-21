@@ -537,7 +537,7 @@ def main():
                         action="store_true", default=False)
 
     parser.add_argument("--nocolor", help="disable color", action="store_true", default=False)
-    parser.add_argument("--cache", help="enable cache", action="store_true", default=False)
+    parser.add_argument("--nocache", help="disable cache", action="store_true", default=False)
 
     parser.add_argument("--logfile", help="write log to file", default=None)
     parser.add_argument("--loglevel", help="loglevel (CRITICAL, ERROR, WARNING, INFO, DEBUG)", default="INFO")
@@ -555,7 +555,7 @@ def main():
     logging.info('Running on Python %d.%d using PySerial %s' \
               % (sys.version_info[0], sys.version_info[1], serial.VERSION))
 
-    mpfs = MpFileShell(not args.nocolor, args.cache)
+    mpfs = MpFileShell(not args.nocolor, not args.nocache)
 
     if args.command is not None:
 
