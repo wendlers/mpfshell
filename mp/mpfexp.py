@@ -344,8 +344,14 @@ class MpFileExplorer(Pyboard):
 
         try:
 
-            self.exec_("f = open('%s', 'r')" % self._fqn(src))
-            ret = self.exec_("for l in f: sys.stdout.write(l),")
+            self.exec_("f = open('%s', 'rb')" % self._fqn(src))
+            ret = self.exec_(
+                "while True:\r\n"
+                "  c = ubinascii.hexlify(f.read(%s))\r\n"
+                "  if not len(c):\r\n"
+                "    break\r\n"
+                "  sys.stdout.write(c)\r\n" % self.BIN_CHUNK_SIZE
+            )
 
         except PyboardError as e:
             if "ENOENT" in str(e):
@@ -353,33 +359,24 @@ class MpFileExplorer(Pyboard):
             else:
                 raise e
 
-        if isinstance(ret, bytes):
-            ret = ret.decode('utf-8')
-
-        return ret
+        return binascii.unhexlify(ret).decode("utf-8")
 
     @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
     def puts(self, dst, lines):
 
         try:
 
-            self.exec_("f = open('%s', 'w')" % self._fqn(dst))
+            data = lines.encode("utf-8")
 
-            if sys.version_info < (3, 0):
+            self.exec_("f = open('%s', 'wb')" % self._fqn(dst))
 
-                for l in lines:
-                    self.exec_("f.write('%s')" % l)
+            while True:
+                c = binascii.hexlify(data[:self.BIN_CHUNK_SIZE])
+                if not len(c):
+                    break
 
-            else:
-
-                lines = lines.replace('\n\r', '\n')
-                lines = lines.replace('\r\n', '\n')
-                lines = lines.replace('\r', '\n')
-
-                for l in lines.split('\n'):
-                    l_enc = l.encode("unicode-escape")
-                    l_enc += b'\n'
-                    self.exec_("f.write(%s)" % l_enc)
+                self.exec_("f.write(ubinascii.unhexlify('%s'))" % c.decode('utf-8'))
+                data = data[self.BIN_CHUNK_SIZE:]
 
             self.exec_("f.close()")
 
@@ -491,6 +488,20 @@ class MpFileExplorerCaching(MpFileExplorer):
 
         if dst is None:
             dst = src
+
+        path = os.path.split(self._fqn(dst))
+        newitm = path[-1]
+        parent = path[:-1][0]
+
+        hit = self.__cache_hit(parent)
+
+        if hit is not None:
+            if not (dst, 'F') in hit:
+                self.__cache(parent, hit + [(newitm, 'F')])
+
+    def puts(self, dst, lines):
+
+        MpFileExplorer.puts(self, dst, lines)
 
         path = os.path.split(self._fqn(dst))
         newitm = path[-1]

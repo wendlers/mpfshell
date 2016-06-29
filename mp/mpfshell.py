@@ -40,6 +40,7 @@ from mp.mpfexp import MpFileExplorerCaching
 from mp.mpfexp import RemoteIOError
 from mp.pyboard import PyboardError
 from mp.conbase import ConError
+from mp.tokenizer import Tokenizer
 
 
 class MpFileShell(cmd.Cmd):
@@ -55,6 +56,7 @@ class MpFileShell(cmd.Cmd):
 
         self.fe = None
         self.repl = None
+        self.tokenizer = Tokenizer()
 
         self.__intro()
         self.__set_prompt_path()
@@ -128,6 +130,17 @@ class MpFileShell(cmd.Cmd):
             return False
 
         return True
+
+    def __parse_file_names(self, args):
+
+        tokens, rest = self.tokenizer.tokenize(args)
+
+        if rest != '':
+            self.__error("Invalid filename given: %s" % rest)
+        else:
+            return [token.value for token in tokens]
+
+        return None
 
     def do_exit(self, args):
         """exit
@@ -220,7 +233,14 @@ class MpFileShell(cmd.Cmd):
             self.__error("Missing argument: <REMOTE DIR>")
         elif self.__is_open():
             try:
-                self.fe.cd(args)
+                s_args = self.__parse_file_names(args)
+                if not s_args:
+                    return
+                elif len(s_args) > 1:
+                    self.__error("Only one argument allowed: <REMOTE DIR>")
+                    return
+
+                self.fe.cd(s_args[0])
                 self.__set_prompt_path()
             except IOError as e:
                 self.__error(str(e))
@@ -242,7 +262,14 @@ class MpFileShell(cmd.Cmd):
             self.__error("Missing argument: <REMOTE DIR>")
         elif self.__is_open():
             try:
-                self.fe.md(args)
+                s_args = self.__parse_file_names(args)
+                if not s_args:
+                    return
+                elif len(s_args) > 1:
+                    self.__error("Only one argument allowed: <REMOTE DIR>")
+                    return
+
+                self.fe.md(s_args[0])
             except IOError as e:
                 self.__error(str(e))
 
@@ -275,10 +302,17 @@ class MpFileShell(cmd.Cmd):
         """
 
         if not len(args):
-            self.__error("Missing argument: <TARGET DIR>")
+            self.__error("Missing argument: <LOCAL DIR>")
         else:
             try:
-                os.chdir(args)
+                s_args = self.__parse_file_names(args)
+                if not s_args:
+                    return
+                elif len(s_args) > 1:
+                    self.__error("Only one argument allowed: <LOCAL DIR>")
+                    return
+
+                os.chdir(s_args[0])
             except OSError as e:
                 self.__error(str(e).split("] ")[-1])
 
@@ -304,7 +338,13 @@ class MpFileShell(cmd.Cmd):
             self.__error("Missing arguments: <LOCAL FILE> [<REMOTE FILE>]")
 
         elif self.__is_open():
-            s_args = args.split(" ")
+
+            s_args = self.__parse_file_names(args)
+            if not s_args:
+                return
+            elif len(s_args) > 2:
+                self.__error("Only one ore two arguments allowed: <LOCAL FILE> [<REMOTE FILE>]")
+                return
 
             lfile_name = s_args[0]
 
@@ -352,7 +392,12 @@ class MpFileShell(cmd.Cmd):
 
         elif self.__is_open():
 
-            s_args = args.split(" ")
+            s_args = self.__parse_file_names(args)
+            if not s_args:
+                return
+            elif len(s_args) > 2:
+                self.__error("Only one ore two arguments allowed: <REMOTE FILE> [<LOCAL FILE>]")
+                return
 
             rfile_name = s_args[0]
 
@@ -404,8 +449,15 @@ class MpFileShell(cmd.Cmd):
             self.__error("Missing argument: <REMOTE FILE>")
         elif self.__is_open():
 
+            s_args = self.__parse_file_names(args)
+            if not s_args:
+                return
+            elif len(s_args) > 1:
+                self.__error("Only one argument allowed: <REMOTE FILE>")
+                return
+
             try:
-                self.fe.rm(args)
+                self.fe.rm(s_args[0])
             except IOError as e:
                 self.__error(str(e))
             except PyboardError:
@@ -446,8 +498,15 @@ class MpFileShell(cmd.Cmd):
             self.__error("Missing argument: <REMOTE FILE>")
         elif self.__is_open():
 
+            s_args = self.__parse_file_names(args)
+            if not s_args:
+                return
+            elif len(s_args) > 1:
+                self.__error("Only one argument allowed: <REMOTE FILE>")
+                return
+
             try:
-                print(self.fe.gets(args))
+                print(self.fe.gets(s_args[0]))
             except IOError as e:
                 self.__error(str(e))
 

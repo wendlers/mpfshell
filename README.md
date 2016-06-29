@@ -68,10 +68,35 @@ To install this tool for __Python 3__, execute the following:
     sudo pip3 install websocket_client
     sudo python3 setup.py install
 
+## Known Issues
+
+* The navigation in the REPL history with the arrow up/down keys behaves strange on certain 
+    combinations of Python and PySerial 
+    (see [issue #11](https://github.com/wendlers/mpfshell/issues/11)).
+    This seams to be a problem in PySerial Miniterm on Python 3.
+    So far it is known working with Python 2.7 and PySerial 3.0.
+* For PySerial 2.6 the REPL is deactivated since Miniterm which comes with 2.6 
+    seams broken.
+
 ## General
+
+### TAB Completion
 
 The shell supports TAB completion for commands and file names.
 So it totally is worth it pressing TAB-TAB every now and then :-)
+
+### File/Directory Names
+
+File-names including whitespaces are supported, but such names need to be enclosed
+in quotes. E.g. accessing a file named "with white space.txt" needs to quoted:
+
+    get "with white space.txt"
+    put "with white space.txt" without-white-space.txt
+    put without-white-space.txt "with white space.txt"
+    
+The following characters are accepted for file and directory names:
+
+    A-Za-z0-9 _%#~@/\$!\*\.\+\-
     
 ## Shell Usage
 

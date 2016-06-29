@@ -82,8 +82,18 @@ class ConWebsock(ConBase, threading.Thread):
     def on_error(self, ws, error):
         logging.error("websocket error: %s" % error)
 
+        try:
+            self.fifo_lock.release()
+        except:
+            pass
+
     def on_close(self, ws):
         logging.info("websocket closed")
+
+        try:
+            self.fifo_lock.release()
+        except:
+            pass
 
     def close(self):
         try:
