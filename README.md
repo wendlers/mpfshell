@@ -70,11 +70,6 @@ To install this tool for __Python 3__, execute the following:
 
 ## Known Issues
 
-* The navigation in the REPL history with the arrow up/down keys behaves strange on certain 
-    combinations of Python and PySerial 
-    (see [issue #11](https://github.com/wendlers/mpfshell/issues/11)).
-    This seams to be a problem in PySerial Miniterm on Python 3.
-    So far it is known working with Python 2.7 and PySerial 3.0.
 * For PySerial 2.6 the REPL is deactivated since Miniterm which comes with 2.6 
     seams broken.
 
