@@ -50,4 +50,5 @@ class ConSerial(ConBase):
         return self.serial.inWaiting()
 
     def survives_soft_reset(self):
-        return True
+        return False
+

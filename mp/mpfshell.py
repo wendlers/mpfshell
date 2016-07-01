@@ -586,6 +586,32 @@ class MpFileShell(cmd.Cmd):
             self.fe.setup()
             print("")
 
+    def do_mpyc(self, args):
+        """mpyc <LOCAL PYTHON FILE>
+        Compile a Python file into byte-code by using mpy-cross (which needs to be in the path).
+        The compiled file has the same name as the original file but with extension '.mpy'.
+        """
+
+        if not len(args):
+            self.__error("Missing argument: <LOCAL FILE>")
+        else:
+
+            s_args = self.__parse_file_names(args)
+            if not s_args:
+                return
+            elif len(s_args) > 1:
+                self.__error("Only one argument allowed: <LOCAL FILE>")
+                return
+
+            try:
+                self.fe.mpy_cross(s_args[0])
+            except IOError as e:
+                self.__error(str(e))
+
+    def complete_mpyc(self, *args):
+        files = [o for o in os.listdir(".") if (os.path.isfile(os.path.join(".", o)) and o.endswith(".py"))]
+        return [i for i in files if i.startswith(args[0])]
+
 
 def main():
 
@@ -635,7 +661,10 @@ def main():
             if len(sline) > 0 and not sline.startswith('#'):
                 script += sline + '\n'
 
-        sys.stdin = io.StringIO(script.decode('utf-8'))
+        if sys.version_info < (3, 0):
+            sys.stdin = io.StringIO(script.decode('utf-8'))
+        else:
+            sys.stdin = io.StringIO(script)
 
         mpfs.intro = ''
         mpfs.prompt = ''

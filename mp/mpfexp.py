@@ -25,11 +25,11 @@
 
 import os
 import re
-import sys
 import sre_constants
 import binascii
 import getpass
 import logging
+import subprocess
 
 from mp.pyboard import Pyboard
 from mp.pyboard import PyboardError
@@ -359,7 +359,20 @@ class MpFileExplorer(Pyboard):
             else:
                 raise e
 
-        return binascii.unhexlify(ret).decode("utf-8")
+        try:
+
+            return binascii.unhexlify(ret).decode("utf-8")
+
+        except UnicodeDecodeError:
+
+            s = ret.decode("utf-8")
+            fs = "\nBinary file:\n\n"
+
+            while len(s):
+                fs += s[:64] + "\n"
+                s = s[64:]
+
+            return fs
 
     @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
     def puts(self, dst, lines):
@@ -427,6 +440,16 @@ class MpFileExplorer(Pyboard):
                 raise RemoteIOError("File or directory exists: %s" % target)
             else:
                 raise e
+
+    def mpy_cross(self, src, dst=None):
+
+        if dst is None:
+            return_code = subprocess.call("mpy-cross %s" % (src), shell=True)
+        else:
+            return_code = subprocess.call("mpy-cross -o %s %s" % (src, dst), shell=True)
+
+        if return_code != 0:
+            raise IOError("Filed to compile: %s" % src)
 
 
 class MpFileExplorerCaching(MpFileExplorer):
