@@ -214,3 +214,34 @@ E.g. creating a file called "myscript.mpf":
 And execute it with:
 
     mpfshell -s myscript.mpf    
+
+
+## Running the Shell in a Virtual Environment
+
+Somtimes it is the easiest way to setup a virtual environment to satisfy the
+requirements. E.g. on Debian Jessi (which still has PySerial 2.6), this could be
+done like so (assuming you are within the `mpfshell` base directory:
+
+Install support for virtual environments:
+
+    sudo apt-get install python3-venv
+
+Create a new virtual environment:
+
+    pyvenv venv
+    
+Activate it (so ervery following `pip3 install` goes to the new virtuel environment):
+
+    source venv/bin/activate
+    
+Now install the dependencies to the virtual environment:
+
+    pip3 install pyserial
+    pip3 install colorama
+    pip3 install websocket_client
+    
+Now run the shell with the following command:
+
+    python3 -m mp.mpfshell
+    
+__Note:__ The environment has always be activated with the above command.
