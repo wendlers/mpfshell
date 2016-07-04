@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 ##
 
+import logging
 
 from serial import Serial
 from mp.conbase import ConBase, ConError
@@ -41,9 +42,12 @@ class ConSerial(ConBase):
         return self.serial.close()
 
     def read(self, size):
-        return self.serial.read(size)
+        data = self.serial.read(size)
+        logging.debug("serial read < %s" % str(data))
+        return data
 
     def write(self, data):
+        logging.debug("serial write > %s" % str(data))
         return self.serial.write(data)
 
     def inWaiting(self):
