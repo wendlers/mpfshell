@@ -49,8 +49,9 @@ class ConSerial(ConBase):
 
                 while True:
                     time.sleep(1.0)
-                    if not len(self.serial.read(self.inWaiting())):
+                    if not self.inWaiting():
                         break
+                    self.serial.read(self.inWaiting())
 
         except Exception as e:
             logging.error(e)
