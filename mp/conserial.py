@@ -48,7 +48,7 @@ class ConSerial(ConBase):
                 self.serial = Serial(port, baudrate=baudrate, interCharTimeout=1)
 
                 while True:
-                    time.sleep(1.0)
+                    time.sleep(2.0)
                     if not self.inWaiting():
                         break
                     self.serial.read(self.inWaiting())
