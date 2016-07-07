@@ -45,11 +45,13 @@ from mp.tokenizer import Tokenizer
 
 class MpFileShell(cmd.Cmd):
 
-    def __init__(self, color=False, caching=False):
+    def __init__(self, color=False, caching=False, reset=False):
 
         cmd.Cmd.__init__(self)
+
         self.color = color
         self.caching = caching
+        self.reset = reset
 
         if self.color:
             colorama.init()
@@ -101,16 +103,22 @@ class MpFileShell(cmd.Cmd):
 
         try:
             self.__disconnect()
+
+            if self.reset:
+                print("Hard resetting device ...")
             if self.caching:
-                self.fe = MpFileExplorerCaching(port)
+                self.fe = MpFileExplorerCaching(port, self.reset)
             else:
-                self.fe = MpFileExplorer(port)
+                self.fe = MpFileExplorer(port, self.reset)
             print("Connected to %s" % self.fe.sysname)
         except PyboardError as e:
+            logging.error(e)
             self.__error(str(e))
-        except ConError:
+        except ConError as e:
+            logging.error(e)
             self.__error("Failed to open: %s" % port)
-        except AttributeError:
+        except AttributeError as e:
+            logging.error(e)
             self.__error("Failed to open: %s" % port)
 
     def __disconnect(self):
@@ -627,6 +635,9 @@ def main():
     parser.add_argument("--logfile", help="write log to file", default=None)
     parser.add_argument("--loglevel", help="loglevel (CRITICAL, ERROR, WARNING, INFO, DEBUG)", default="INFO")
 
+    parser.add_argument("--reset", help="hard reset device via DTR (serial connection only)", action="store_true",
+                        default=False)
+
     args = parser.parse_args()
 
     format = '%(asctime)s\t%(levelname)s\t%(message)s'
@@ -640,7 +651,7 @@ def main():
     logging.info('Running on Python %d.%d using PySerial %s' \
               % (sys.version_info[0], sys.version_info[1], serial.VERSION))
 
-    mpfs = MpFileShell(not args.nocolor, not args.nocache)
+    mpfs = MpFileShell(not args.nocolor, not args.nocache, args.reset)
 
     if args.command is not None:
 

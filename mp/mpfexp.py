@@ -49,7 +49,7 @@ class MpFileExplorer(Pyboard):
     BIN_CHUNK_SIZE = 64
     MAX_TRIES = 3
 
-    def __init__(self, constr):
+    def __init__(self, constr, reset=False):
         """
         Supports the following connection strings.
 
@@ -59,6 +59,8 @@ class MpFileExplorer(Pyboard):
 
         :param constr:      Connection string as defined above.
         """
+
+        self.reset = reset
 
         try:
             Pyboard.__init__(self, self.__con_from_str(constr))
@@ -96,7 +98,7 @@ class MpFileExplorer(Pyboard):
             else:
                 baudrate = 115200
 
-            con = ConSerial(port=port, baudrate=baudrate)
+            con = ConSerial(port=port, baudrate=baudrate, reset=self.reset)
 
         elif proto.strip(" ") == "tn":
 
@@ -454,8 +456,8 @@ class MpFileExplorer(Pyboard):
 
 class MpFileExplorerCaching(MpFileExplorer):
 
-    def __init__(self, constr):
-        MpFileExplorer.__init__(self, constr)
+    def __init__(self, constr, reset=False):
+        MpFileExplorer.__init__(self, constr, reset)
 
         self.cache = {}
 
