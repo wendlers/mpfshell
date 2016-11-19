@@ -526,6 +526,7 @@ class MpFileShell(cmd.Cmd):
         """
 
         def data_consumer(data):
+            data = str(data.decode('utf-8'))
             sys.stdout.write(data.strip("\x04"))
 
         if not len(args):
