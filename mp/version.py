@@ -23,30 +23,8 @@
 ##
 
 
-class ConError(Exception):
-    pass
+MAJOR = 0
+MINOR = 7
+PATCH = 6
 
-
-class ConBase:
-
-    def __init__(self):
-        pass
-
-    def close(self):
-        raise NotImplemented()
-
-    def read(self, size):
-        raise NotImplemented()
-
-    def write(self, data):
-        raise NotImplemented()
-
-    def inWaiting(self):
-        raise NotImplemented()
-
-    @property
-    def in_waiting(self):
-        return self.inWaiting()
-
-    def survives_soft_reset(self):
-        return False
+FULL = "%d.%d.%d" % (MAJOR, MINOR, PATCH)

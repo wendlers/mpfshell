@@ -22,11 +22,8 @@
 # THE SOFTWARE.
 ##
 
-"""
-2016-06-04, sw@kaltpost.de
-
-Representation of a serial connection
-"""
+import time
+import logging
 
 from serial import Serial
 from mp.conbase import ConBase, ConError
@@ -34,25 +31,47 @@ from mp.conbase import ConBase, ConError
 
 class ConSerial(ConBase):
 
-    def __init__(self, port, baudrate=115200):
+    def __init__(self, port, baudrate=115200, reset=False):
         ConBase.__init__(self)
 
         try:
             self.serial = Serial(port, baudrate=baudrate, interCharTimeout=1)
+
+            if reset:
+                logging.info("Hard resetting device at port: %s" % port)
+
+                self.serial.setDTR(True)
+                time.sleep(0.25)
+                self.serial.setDTR(False)
+
+                self.serial.close()
+                self.serial = Serial(port, baudrate=baudrate, interCharTimeout=1)
+
+                while True:
+                    time.sleep(2.0)
+                    if not self.inWaiting():
+                        break
+                    self.serial.read(self.inWaiting())
+
         except Exception as e:
+            logging.error(e)
             raise ConError(e)
 
     def close(self):
         return self.serial.close()
 
     def read(self, size):
-        return self.serial.read(size)
+        data = self.serial.read(size)
+        logging.debug("serial read < %s" % str(data))
+        return data
 
     def write(self, data):
+        logging.debug("serial write > %s" % str(data))
         return self.serial.write(data)
 
     def inWaiting(self):
         return self.serial.inWaiting()
 
     def survives_soft_reset(self):
-        return True
+        return False
+

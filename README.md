@@ -1,11 +1,11 @@
 # mpfshell
-2016-06-03, sw@kaltpost.de
+2016-06-21, sw@kaltpost.de
 
 A simple shell based file explorer for ESP8266 and WiPy 
 [Micropython](https://github.com/micropython/micropython) based devices.
 
-The shell is a "quick" solution for up/downloading files to the ESP8266 (over serial line) and WiPy 
-(serial line and telnet). It basically offers commands to list and upload/download 
+The shell is a helper for up/downloading files to the ESP8266 (over serial line and Websockets) 
+and WiPy (serial line and telnet). It basically offers commands to list and upload/download 
 files on the flash FS of the device.
 
 ![mpfshell](./doc/screenshot.png)
@@ -13,6 +13,7 @@ files on the flash FS of the device.
 Main features:
 
 * Support for serial connections (ESP8266 and WiPi)
+* Support for websockets (via WebREPL) connections (ESP8266 only)
 * Support for telnet connections (WiPy only)
 * Full directory handling (enter, create, remove)
 * Transfer (upload/download) of multiple files matching a reg.-exp.
@@ -20,41 +21,83 @@ Main features:
   possible to also upload pre-compiled code (.mpy) too.
 * Integrated REPL (supporting a workflow like: upload changed files, enter REPL, test, exit REPL, upload ...)
 * Fully scriptable
+* Tab-completion
+* Command history
 * Best of all: it comes with color
 
 
-__Note__: The software is tested on Ubunto 16.04 LTS.
+__Note__: The software is mainly tested on Ubunto 16.04 LTS. However, there is basic Windows support
+(tested with Python 3.5 and PySerial 3.1), but some of the keys (e.g. Tab are note working as 
+expected yet).
 
 ## Requirements
 
 General:
 
 * ESP8266 or WiPy board running latest [Micropython](https://github.com/micropython/micropython)
+* For the ESP8266 firware build from the repository, please not, that WebREPL is not started
+  by default. For more information see the [quickstart](http://micropython.org/resources/docs/en/latest/esp8266/esp8266/quickref.html#webrepl-web-browser-interactive-prompt).
 * For the WiPy, please note, that you need to enable REPL on UART if you intend to connect
   via serial line to the WiPy (see [here](http://micropython.org/resources/docs/en/latest/wipy/wipy/tutorial/repl.html))
 
 For the shell:
 
-* Python 2.7
-* The PySerial library >= 3.0 (sudo pip install pyserial)
+* Python >= 2.7 or Python >= 3.4
+* The PySerial library >= 2.7 (sudo pip install pyserial)
 * The colorama library >= 0.3.6 (sudo pip install colorama)
+* The websocket-client library >= 0.35.0 (sudo pip install websocket-client)
 
+__IMPORTANT__: PySerial versions before 2.7 really don't work!!! It is highly
+recommended to use PySerial version 3.x on Python2 and Python3.
+ 
 __Note__: The tools only works if the REPL is accessible on the device!
 
 ## Installing
 
-To install this tool execute the following:
+To install this tool for __Python 2__, execute the following:
 
 	sudo pip install pyserial
     sudo pip install colorama
+    sudo pip install websocket_client
     sudo python setup.py install
-    
+
+To install this tool for __Python 3__, execute the following:
+
+	sudo pip3 install pyserial
+    sudo pip3 install colorama
+    sudo pip3 install websocket_client
+    sudo python3 setup.py install
+
+## Known Issues
+
+* For PySerial 2.6 the REPL is deactivated since Miniterm which comes with 2.6 
+    seams broken.
+
 ## General
+
+### TAB Completion
 
 The shell supports TAB completion for commands and file names.
 So it totally is worth it pressing TAB-TAB every now and then :-)
+
+### File/Directory Names
+
+File-names including whitespaces are supported, but such names need to be enclosed
+in quotes. E.g. accessing a file named "with white space.txt" needs to quoted:
+
+    get "with white space.txt"
+    put "with white space.txt" without-white-space.txt
+    put without-white-space.txt "with white space.txt"
+    
+The following characters are accepted for file and directory names:
+
+    A-Za-z0-9 _%#~@/\$!\*\.\+\-
     
 ## Shell Usage
+
+__Note:__ Since version 0.7.1, the shell offers caching for file and
+directory names. It is now enabled by default. To disable caching, 
+add the `--nocache` flag on the command line.
 
 Start the shell with:
 
@@ -65,7 +108,11 @@ via serail line:
 
     mpfs> open ttyUSB0
     
-Or connect vial telnet (WiPy) only:
+Or connect via websocket (ESP8266 only):
+
+    mpfs> open ws:192.168.1.1,python
+    
+Or connect vial telnet (WiPy only):
 
     mpfs> open tn:192.168.1.1,micro,python
     
@@ -119,7 +166,7 @@ To navigate remote directories:
     mpfs> cd ..
     mpfs> cd /some/full/path
     
-See which is the curren remote directory:
+See which is the current remote directory:
 
     mpfs> pwd
 
@@ -167,3 +214,34 @@ E.g. creating a file called "myscript.mpf":
 And execute it with:
 
     mpfshell -s myscript.mpf    
+
+
+## Running the Shell in a Virtual Environment
+
+Somtimes it is the easiest way to setup a virtual environment to satisfy the
+requirements. E.g. on Debian Jessi (which still has PySerial 2.6), this could be
+done like so (assuming you are within the `mpfshell` base directory:
+
+Install support for virtual environments:
+
+    sudo apt-get install python3-venv
+
+Create a new virtual environment:
+
+    pyvenv venv
+    
+Activate it (so ervery following `pip3 install` goes to the new virtuel environment):
+
+    source venv/bin/activate
+    
+Now install the dependencies to the virtual environment:
+
+    pip3 install pyserial
+    pip3 install colorama
+    pip3 install websocket_client
+    
+Now run the shell with the following command:
+
+    python3 -m mp.mpfshell
+    
+__Note:__ The environment has always be activated with the above command.
