@@ -171,46 +171,36 @@ class MpFileExplorer(Pyboard):
 
             if add_dirs:
                 for f in tmp:
-                    try:
-
-                        # if it is a dir, it could be listed with "os.listdir"
-                        self.eval("os.listdir('%s/%s')" % (self.dir, f))
+                    # Grab stats about the file. If this is root directory don't add a secondary /
+                    res = self.eval("os.stat('%s%s%s')" % (self.dir,"" if self.dir == "/" else "/", f))
+                    stat = eval(res)
+                    # Compare the stat.st_mode with the IS_DIRECTORY mask
+                    if stat[0] & 0o0040000:
                         if add_details:
                             files.append((f, 'D'))
                         else:
                             files.append(f)
-
-                    except PyboardError as e:
-
-                        if "ENOENT" in str(e):
-                            # this was not a dir
-                            if self.sysname == "WiPy" and self.dir == "/":
-                                # for the WiPy, assume that all entries in the root of th FS
-                                # are mount-points, and thus treat them as directories
-                                if add_details:
-                                    files.append((f, 'D'))
-                                else:
-                                    files.append(f)
-                        else:
-                            raise e
-
-            if add_files and not (self.sysname == "WiPy" and self.dir == "/"):
-                for f in tmp:
-                    try:
-
-                        # if it is a file, "os.listdir" must fail
-                        self.eval("os.listdir('%s/%s')" % (self.dir, f))
-
-                    except PyboardError as e:
-
-                        if "ENOENT" in str(e):
+                    else:
+                        # this was not a dir
+                        if (self.sysname == "WiPy" or self.sysname == "LoPy") and self.dir == "/":
+                            # for the WiPy and LoPy, assume that all entries in the root of th FS
+                            # are mount-points, and thus treat them as directories
                             if add_details:
-                                files.append((f, 'F'))
+                                files.append((f, 'D'))
                             else:
                                 files.append(f)
+                        
+            if add_files and not ((self.sysname == "WiPy" or self.sysname == "LoPy") and self.dir == "/"):
+                for f in tmp:
+                    res = self.eval("os.stat('%s%s%s')" % (self.dir,"" if self.dir == "/" else "/", f))
+                    stat = eval(res)
+                    # Compare the stat.st_mode with the IS_FILE mask
+                    if stat[0] & 0o0100000:
+                        if add_details:
+                            files.append((f, 'F'))
                         else:
-                            raise e
-
+                            files.append(f)
+                        
         except Exception  as e:
             if "ENOENT" in str(e):
                 raise RemoteIOError("No such directory: %s" % self.dir)
