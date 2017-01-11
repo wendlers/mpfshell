@@ -180,17 +180,8 @@ class MpFileExplorer(Pyboard):
                             files.append((f, 'D'))
                         else:
                             files.append(f)
-                    else:
-                        # this was not a dir
-                        if (self.sysname == "WiPy" or self.sysname == "LoPy") and self.dir == "/":
-                            # for the WiPy and LoPy, assume that all entries in the root of th FS
-                            # are mount-points, and thus treat them as directories
-                            if add_details:
-                                files.append((f, 'D'))
-                            else:
-                                files.append(f)
                         
-            if add_files and not ((self.sysname == "WiPy" or self.sysname == "LoPy") and self.dir == "/"):
+            if add_files:
                 for f in tmp:
                     res = self.eval("os.stat('%s%s%s')" % (self.dir,"" if self.dir == "/" else "/", f))
                     stat = eval(res)
