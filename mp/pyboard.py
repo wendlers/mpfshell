@@ -151,6 +151,10 @@ class Pyboard:
         ret = ret.strip()
         return ret
 
+    def eval_with_exception(self, expression):
+        code_block = map(join,"\t",expression.split("\n"))
+        ret, ret_err = self.exec_raw('print({})'.format(expression))
+
     def exec_(self, command):
         ret, ret_err = self.exec_raw(command)
         if ret_err:
