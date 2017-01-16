@@ -617,6 +617,16 @@ class MpFileShell(cmd.Cmd):
             except IOError as e:
                 self.__error(str(e))
 
+    def do_crash(self, args):
+        """crash
+        Runs some test code which likely crashes
+        """
+        if self.__is_open():
+            try:
+                self.fe.crash()
+            except IOError as e:
+                self.__error(str(e))     
+
     def complete_mpyc(self, *args):
         files = [o for o in os.listdir(".") if (os.path.isfile(os.path.join(".", o)) and o.endswith(".py"))]
         return [i for i in files if i.startswith(args[0])]

@@ -24,6 +24,19 @@ def stdout_write_bytes(b):
 class PyboardError(BaseException):
     pass
 
+class InternalError(Exception):
+    """Exception raised for errors occuring on the board.
+
+    Attributes:
+        exception -- the name of the exception
+        args -- the arguments passed on the creation of the exception
+        msg -- the message that would be printed as output. Includes the traceback
+    """
+    def __init__(self, exception, args, msg):
+        self.exception = exception
+        self.args = args
+        self.msg = msg
+
 
 class Pyboard:
 
@@ -152,13 +165,33 @@ class Pyboard:
         return ret
 
     def eval_with_exception(self, expression):
-        code_block = map(join,"\t",expression.split("\n"))
-        ret, ret_err = self.exec_raw('print({})'.format(expression))
+        # Wrap the execution in an exception handler which gathers data. Then write it to stderr after a x04 to force it to be registered as an error.
+        ret, ret_err = self.exec_raw(
+"""
+try:
+    print({})
+except Exception as e:
+    import sys
+    sys.stderr.write("\\x04("+str(type(e))[7:-1]+","+str(e.args)+")\x1F")
+    raise""".format(expression))
+        if ret_err:
+            if ret_err[-1] == 31:
+                # Special error with parsable output
+                error_msg = self.read_until(1, b'\x04', timeout=10)
+                if not error_msg.endswith(b'\x04'):
+                    raise PyboardError('timeout waiting for third EOF reception')
+                error_msg = error_msg[:-1]
+                data = eval(ret_err[:-1])
+                raise InternalError(data[0],data[1],error_msg)
+            else:
+                # Not one of our special errors, throw a regular error
+                raise PyboardError('exception', ret, ret_err)
+        return ret
 
     def exec_(self, command):
         ret, ret_err = self.exec_raw(command)
         if ret_err:
-            raise PyboardError('exception', ret, ret_err)
+            raise PyboardError("exception",ret,ret_err)
         return ret
 
     def execfile(self, filename):

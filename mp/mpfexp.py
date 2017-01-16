@@ -33,6 +33,7 @@ import subprocess
 
 from mp.pyboard import Pyboard
 from mp.pyboard import PyboardError
+from mp.pyboard import InternalError
 from mp.conserial import ConSerial
 from mp.contelnet import ConTelnet
 from mp.conwebsock import ConWebsock
@@ -159,14 +160,23 @@ class MpFileExplorer(Pyboard):
         self.exec_("import os, sys, ubinascii")
         self.__set_sysname()
 
+    def crash(self):
+        try:
+            res = self.eval_with_exception("os.listdir('test')")
+            print(res)
+        except InternalError as e:
+            print("Internal error occured:")
+            print(e.exception)
+            print(e.args)
+            print(e.msg)
+
     @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
     def ls(self, add_files=True, add_dirs=True, add_details=False):
 
         files = []
 
         try:
-
-            res = self.eval("os.listdir('%s')" % self.dir)
+            res = self.eval_with_exception("os.listdir('%s')" % self.dir)
             tmp = eval(res)
 
             if add_dirs:
@@ -192,11 +202,14 @@ class MpFileExplorer(Pyboard):
                         else:
                             files.append(f)
                         
-        except Exception  as e:
-            if "ENOENT" in str(e):
-                raise RemoteIOError("No such directory: %s" % self.dir)
+        except InternalError as e:
+            # If the error is an OSError we create a RemoteIOError with the same message (argument 0 of micropython OSError is message)
+            if e.exception == "OSError":
+                raise RemoteIOError(e.args[0])
             else:
                 raise PyboardError(e)
+        except Exception as e:
+            raise PyboardError(e)
 
         return files
 
@@ -211,6 +224,7 @@ class MpFileExplorer(Pyboard):
             elif "EACCES" in str(e):
                 raise RemoteIOError("Directory not empty: %s" % target)
             else:
+                print(e)
                 raise e
 
     def mrm(self, pat, verbose=False):
