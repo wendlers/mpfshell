@@ -133,12 +133,13 @@ class MpFileExplorer(Pyboard):
         return con
 
     def _fqn(self, name):
-
-        if self.dir.endswith("/"):
-            fqn = self.dir + name
+        if name[0] != '/':
+            if self.dir.endswith("/"):
+                fqn = self.dir + name
+            else:
+                fqn = self.dir + "/" + name
         else:
-            fqn = self.dir + "/" + name
-
+            fqn = name
         return fqn
 
     def __set_sysname(self):
@@ -198,7 +199,7 @@ class MpFileExplorer(Pyboard):
                         
         except InternalError as e:
             if e.exception == "OSError":
-                raise RemoteIOError(os.strerror+(": %s" % dst))
+                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % dst))
             else:
                 raise RemoteIOError("Unknown error: %s" % e.msg)
         #except Exception as e:
@@ -214,7 +215,7 @@ class MpFileExplorer(Pyboard):
             self.eval_with_exception("os.remove('%s')" % self._fqn(target))
         except InternalError as e:
             if e.exception == "OSError":
-                raise RemoteIOError(os.strerror+(": %s" % dst))
+                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % dst))
             else:
                 raise RemoteIOError("Unknown error: %s" % e.msg)
 
@@ -256,7 +257,7 @@ class MpFileExplorer(Pyboard):
             self.exec_with_exception("f.close()")
         except InternalError as e:
             if e.exception == "OSError":
-                raise RemoteIOError(os.strerror+(": %s" % dst))
+                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % dst))
             else:
                 raise RemoteIOError("Unknown error: %s" % e.msg)
 
@@ -288,10 +289,11 @@ class MpFileExplorer(Pyboard):
                 "  if not len(c)==%s:\n"
                 "    break\n" % (self.BIN_CHUNK_SIZE,self.BIN_CHUNK_SIZE)
             )
+            self.exec_("f.close()")
 
         except InternalError as e:
             if e.exception == "OSError":
-                raise RemoteIOError(os.strerror+(": %s" % dst))
+                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % dst))
             else:
                 raise RemoteIOError("Unknown error: %s" % e.msg)
         return eval(ret)
@@ -299,14 +301,25 @@ class MpFileExplorer(Pyboard):
     @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
     def get(self, src, dst=None):
 
-        if src not in self.ls():
-            raise RemoteIOError("No such file or directory: '%s'" % self._fqn(src))
+        # Check if file exists
+        try:
+            print(self._fqn(src))
+            res = self.eval_with_exception("os.stat('%s')" % self._fqn(src))
+            stat = eval(res)
+            if not stat[0] & 0o0100000:
+                raise RemoteIOError("%s is not a file" % self._fqn(src))
+        except InternalError as e:
+            if e.exception == "OSError":
+                raise RemoteIOError(os.strerror(e.args[0])+(": %s %s" % (dst, e.msg)))
+            else:
+                raise RemoteIOError("Unknown error: %s" % e.msg)
 
         if dst is None:
-            dst = src
+            # Use this to save as the same filename locally but not in the same directory
+            dst = src.split("/")[-1]
 
         f = open(dst, "wb")
-        f.write(eval(get_file_contents(src)))
+        f.write(self.get_file_contents(src))
         f.close()
 
     def mget(self, dst_dir, pat, verbose=False):
@@ -328,7 +341,7 @@ class MpFileExplorer(Pyboard):
 
     @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
     def gets(self, src):
-        file = get_file_contents(src)
+        file = self.get_file_contents(src)
 
         try:
 
@@ -385,13 +398,14 @@ class MpFileExplorer(Pyboard):
 
         # see if the new dir exists
         try:
-
-            self.eval_with_exception("os.listdir('%s')" % tmp_dir)
-            self.dir = tmp_dir
+            res = self.eval_with_exception("os.stat('%s')" % tmp_dir)
+            stat = eval(res)
+            if stat[0] & 0o00400000:
+                self.dir = tmp_dir
 
         except InternalError as e:
             if e.exception == "OSError":
-                raise RemoteIOError(os.strerror+(": %s" % dst))
+                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % dst))
             else:
                 raise RemoteIOError("Unknown error: %s" % e.msg)
 
@@ -407,7 +421,7 @@ class MpFileExplorer(Pyboard):
 
         except InternalError as e:
             if e.exception == "OSError":
-                raise RemoteIOError(os.strerror+(": %s" % dst))
+                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % dst))
             else:
                 raise RemoteIOError("Unknown error: %s" % e.msg)
 

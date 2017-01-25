@@ -417,15 +417,8 @@ class MpFileShell(cmd.Cmd):
                 self.__error("Only one ore two arguments allowed: <REMOTE FILE> [<LOCAL FILE>]")
                 return
 
-            rfile_name = s_args[0]
-
-            if len(s_args) > 1:
-                lfile_name = s_args[1]
-            else:
-                lfile_name = rfile_name
-
             try:
-                self.fe.get(rfile_name, lfile_name)
+                self.fe.get(src=s_args[0], dst=(s_args[1] if len(s_args)>1 else None))
             except IOError as e:
                 self.__error(str(e))
 
