@@ -170,7 +170,7 @@ class MpFileShell(cmd.Cmd):
         """
 
         if not len(args):
-            self.__error("Missing argument: <PORT>")
+            self.__error("Missing argument: <TARGET>")
         else:
             if not args.startswith("ser:/dev/") \
                     and not args.startswith("ser:COM") \
@@ -195,19 +195,26 @@ class MpFileShell(cmd.Cmd):
 
         self.__disconnect()
 
-    def do_ls(self, args):
-        """ls
-        List remote files.
+    def do_ls(self, directory):
+        """ls [directory]
+        List remote files, optionally in directory
         """
 
         if self.__is_open():
+            olddir = self.fe.pwd()
             try:
+                if len(directory)!=0:
+                    self.fe.cd(directory)
+                    
                 files = self.fe.ls(add_details=True)
 
                 if self.fe.pwd() != "/":
                     files = [("..", "D")] + files
 
                 print("\nRemote files in '%s':\n" % self.fe.pwd())
+
+                # Sort alphabetically, then sort folders over files
+                files = sorted(sorted(files,key=lambda file: file[0]), key=lambda file: file[1])
 
                 for elem, type in files:
                     if type == 'F':
@@ -225,6 +232,9 @@ class MpFileShell(cmd.Cmd):
 
             except IOError as e:
                 self.__error(str(e))
+
+            if len(directory)!=0:
+                self.fe.cd(olddir)
 
     def do_pwd(self, args):
         """pwd
@@ -617,15 +627,15 @@ class MpFileShell(cmd.Cmd):
             except IOError as e:
                 self.__error(str(e))
 
-    def do_crash(self, args):
-        """crash
-        Runs some test code which likely crashes
-        """
-        if self.__is_open():
-            try:
-                self.fe.crash()
-            except IOError as e:
-                self.__error(str(e))     
+    #def do_crash(self, args):
+    #    """crash
+    #    Runs some test code which likely crashes
+    #    """
+    #    if self.__is_open():
+    #        try:
+    #            self.fe.crash()
+    #        except IOError as e:
+    #            self.__error(str(e))     
 
     def complete_mpyc(self, *args):
         files = [o for o in os.listdir(".") if (os.path.isfile(os.path.join(".", o)) and o.endswith(".py"))]
