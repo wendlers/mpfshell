@@ -140,6 +140,8 @@ class MpFileExplorer(Pyboard):
                 fqn = self.dir + "/" + name
         else:
             fqn = name
+        if fqn.endswith("/"):
+            fqn = fqn[:-1]
         return fqn
 
     def __set_sysname(self):
@@ -199,7 +201,7 @@ class MpFileExplorer(Pyboard):
                         
         except InternalError as e:
             if e.exception == "OSError":
-                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % dst))
+                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % self.dir))
             else:
                 raise RemoteIOError("Unknown error: %s" % e.msg)
         #except Exception as e:
@@ -211,11 +213,49 @@ class MpFileExplorer(Pyboard):
     def rm(self, target):
         try:
             # Stat gives a status code, remove only gives a text error. So we stat to be able to easily check the error code.
-            self.eval_with_exception("os.stat('%s')" % self._fqn(target))
-            self.eval_with_exception("os.remove('%s')" % self._fqn(target))
+            res = self.eval_with_exception("os.stat('%s')" % self._fqn(target))
+            stat = eval(res)
+            if stat[0] & 0o0100000:
+                self.eval_with_exception("os.remove('%s')" % self._fqn(target))
+            else:
+                olddir = self.pwd()
+                self.cd(target)
+                dirs = self.ls(add_details=False)
+                self.cd(olddir)
+                if len(dirs) > 0:
+                    raise RemoteIOError("Can only remove files and empty directories. If you want to remove a directory with files see 'rmr'")
+                else:
+                    self.eval_with_exception("os.remove('%s')" % self._fqn(target))
         except InternalError as e:
             if e.exception == "OSError":
-                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % dst))
+                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % target))
+            else:
+                raise RemoteIOError("Unknown error: %s" % e.msg)
+
+    @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
+    def rmr(self, target):
+        try:
+            # Stat gives a status code, remove only gives a text error. So we stat to be able to easily check the error code.
+            res = self.eval_with_exception("os.stat('%s')" % self._fqn(target))
+            stat = eval(res)
+            if stat[0] & 0o0040000:
+                olddir = self.pwd()
+                self.cd(target)
+                files = self.ls(add_dirs=False)
+                for file in files:
+                    self.rm(file)
+
+                dirs = self.ls(add_files=False)
+                for directory in dirs:
+                    self.rmr(directory)
+
+                self.cd(olddir)
+                self.rm(target)
+            else:
+                raise RemoteIOError("Can only remove directories. If you want to remove a single file see 'rm'")
+        except InternalError as e:
+            if e.exception == "OSError":
+                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % target))
             else:
                 raise RemoteIOError("Unknown error: %s" % e.msg)
 
@@ -235,10 +275,10 @@ class MpFileExplorer(Pyboard):
     def put(self, src, dst=None):
 
         f = open(src, "rb")
-        f.close()
 
         if dst is None:
-            dst = src
+            # Use this to save as the same filename locally but not in the same directory
+            dst = src.split("/")[-1]
 
         try:
             # Since exec_with_exception is scoped in a try catch we must instantiate f first
@@ -247,11 +287,11 @@ class MpFileExplorer(Pyboard):
 
             while True:
                 # Read in a chunk
-                data = f.read(BIN_CHUNK_SIZE)
+                data = f.read(self.BIN_CHUNK_SIZE)
                 # Write it to the file
                 self.exec_with_exception("f.write(%s)" % repr(data))
                 # If less data was read than what we wanted the file is ended
-                if len(data) < BIN_CHUNK_SIZE:
+                if len(data) < self.BIN_CHUNK_SIZE:
                     break
 
             self.exec_with_exception("f.close()")
@@ -260,6 +300,54 @@ class MpFileExplorer(Pyboard):
                 raise RemoteIOError(os.strerror(e.args[0])+(": %s" % dst))
             else:
                 raise RemoteIOError("Unknown error: %s" % e.msg)
+
+        f.close()
+
+    def putr(self,src,dst=None):
+        olddir = self.pwd()
+        if dst is None:
+            dst = self._fqn(self.pwd())+'/'+(src.split('/')[-1])
+
+        try:
+            res = self.eval_with_exception("os.stat('%s')" % self._fqn(dst))
+            stat = eval(res)
+            if not stat[0] & 0o0040000:
+                raise RemoteIOError("Remote directory %s is not a directory" % self._fqn(dst))
+        except InternalError as e:
+            if e.exception == "OSError":
+                if e.args[0]==2:
+                    self.md(dst)
+                else:
+                    raise RemoteIOError(os.strerror(e.args[0])+(": %s" % self._fqn(dst)))
+            else:
+                raise RemoteIOError("Unknown error: %s" % e.msg)
+
+        try:
+            stat = os.stat(src)
+            if not stat[0] & 0o0040000:
+                raise RemoteIOError("Local directory %s is not a directory" % self._fqn(src))
+        except FileNotFoundError:
+            raise RemoteIOError("Local directory %s does not exist" % self._fqn(src))
+
+        for root, dirs, files in os.walk(src):
+            self.cd('/'.join([self._fqn(dst)]+root.split('/')[1:]))
+            for d in dirs:
+                try:
+                    res = self.eval_with_exception("os.stat('%s')" % self._fqn(d))
+                    stat = eval(res)
+                    if not stat[0] & 0o0040000:
+                        raise RemoteIOError("Remote directory %s is not a directory" % self._fqn(d))
+                except InternalError as e:
+                    if e.exception == "OSError":
+                        if e.args[0]==2:
+                            self.md(d)
+                        else:
+                            raise RemoteIOError(os.strerror(e.args[0])+(": %s" % self._fqn(d)))
+                    else:
+                        raise RemoteIOError("Unknown error: %s" % e.msg)
+            for file in files:
+                self.put(os.path.join(root, file))
+        self.cd(olddir)
 
     def mput(self, src_dir, pat, verbose=False):
 
@@ -293,7 +381,7 @@ class MpFileExplorer(Pyboard):
 
         except InternalError as e:
             if e.exception == "OSError":
-                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % dst))
+                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % src))
             else:
                 raise RemoteIOError("Unknown error: %s" % e.msg)
         return eval(ret)
@@ -303,14 +391,13 @@ class MpFileExplorer(Pyboard):
 
         # Check if file exists
         try:
-            print(self._fqn(src))
             res = self.eval_with_exception("os.stat('%s')" % self._fqn(src))
             stat = eval(res)
             if not stat[0] & 0o0100000:
                 raise RemoteIOError("%s is not a file" % self._fqn(src))
         except InternalError as e:
             if e.exception == "OSError":
-                raise RemoteIOError(os.strerror(e.args[0])+(": %s %s" % (dst, e.msg)))
+                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % src))
             else:
                 raise RemoteIOError("Unknown error: %s" % e.msg)
 
@@ -321,6 +408,40 @@ class MpFileExplorer(Pyboard):
         f = open(dst, "wb")
         f.write(self.get_file_contents(src))
         f.close()
+
+    def getr(self, src, dst = None):
+        try:
+            res = self.eval_with_exception("os.stat('%s')" % self._fqn(src))
+            stat = eval(res)
+            if not stat[0] & 0o0040000:
+                raise RemoteIOError("Remote directory %s is not a directory" % self._fqn(src))
+        except InternalError as e:
+            if e.exception == "OSError":
+                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % self._fqn(src)))
+            else:
+                raise RemoteIOError("Unknown error: %s" % e.msg)
+
+        if dst is None:
+            dst = src.split("/")[-1]
+
+        try:
+            stat = os.stat(dst)
+            if not stat[0] & 0o0040000:
+                raise RemoteIOError("Local directory %s is not a directory" % self._fqn(dst))
+        except FileNotFoundError:
+            os.mkdir(dst)
+
+        olddir = self.pwd()
+        self.cd(src)
+        files = self.ls(add_dirs=False)
+        for file in files:
+            self.get(file, dst+('/' if dst[-1]!= '/' else '')+file)
+
+        dirs = self.ls(add_files=False)
+        for directory in dirs:
+            self.getr(directory,dst+('/' if dst[-1]!= '/' else '')+directory)
+
+        self.cd(olddir)
 
     def mget(self, dst_dir, pat, verbose=False):
 
@@ -400,12 +521,12 @@ class MpFileExplorer(Pyboard):
         try:
             res = self.eval_with_exception("os.stat('%s')" % tmp_dir)
             stat = eval(res)
-            if stat[0] & 0o00400000:
+            if stat[0] & 0o0040000:
                 self.dir = tmp_dir
 
         except InternalError as e:
             if e.exception == "OSError":
-                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % dst))
+                raise RemoteIOError(os.strerror(e.args[0])+(": %s" % tmp_dir))
             else:
                 raise RemoteIOError("Unknown error: %s" % e.msg)
 
