@@ -67,7 +67,7 @@ class MpFileExplorer(Pyboard):
         except Exception as e:
             raise ConError(e)
 
-        self.dir = "/"
+        self.dir = "/flash/"
         self.sysname = None
         self.setup()
 
@@ -146,7 +146,7 @@ class MpFileExplorer(Pyboard):
     def close(self):
 
         Pyboard.close(self)
-        self.dir = "/"
+        self.dir = "/flash/"
 
     def teardown(self):
 
