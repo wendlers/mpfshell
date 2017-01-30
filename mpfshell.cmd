@@ -1,1 +1,1 @@
-@py -2 "%~dp0mpfshell" %*
+@py -3 "%~dp0mpfshell" %*
