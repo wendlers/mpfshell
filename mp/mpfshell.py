@@ -46,15 +46,16 @@ from mp.tokenizer import Tokenizer
 class MpFileShell(cmd.Cmd):
 
     def __init__(self, color=False, caching=False, reset=False):
-
-        cmd.Cmd.__init__(self)
+        if color:
+            colorama.init()
+            cmd.Cmd.__init__(self, stdout=colorama.initialise.wrapped_stdout)
+        else:
+            cmd.Cmd.__init__(self)
+        self.use_rawinput = False
 
         self.color = color
         self.caching = caching
         self.reset = reset
-
-        if self.color:
-            colorama.init()
 
         self.fe = None
         self.repl = None
