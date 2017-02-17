@@ -1,7 +1,6 @@
 # mpfshell
 
-2016-06-21, sw@kaltpost.de. Forkbase
-
+2016-06-21, sw@kaltpost.de. Forkbase  
 2017-02-17, latest version. Forked by and modified for LoPy use by github.com/PMunch
 
 A simple shell based file explorer for ESP8266, WiPy, and LoPy [Micropython](https://github.com/micropython/micropython) based devices.
