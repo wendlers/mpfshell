@@ -1,5 +1,7 @@
 # mpfshell
+
 2016-06-21, sw@kaltpost.de. Forkbase
+
 2017-02-17, latest version. Forked by and modified for LoPy use by github.com/PMunch
 
 A simple shell based file explorer for ESP8266, WiPy, and LoPy [Micropython](https://github.com/micropython/micropython) based devices.
@@ -8,7 +10,28 @@ The shell is a helper for up/downloading files to the ESP8266 (over serial line 
 
 ![mpfshell](./doc/screenshot.png)
 
-Main features:
+- [mpfshell](#mpfshell)
+  * [Main features:](#main-features-)
+  * [Requirements](#requirements)
+  * [Installing](#installing)
+  * [Known Issues](#known-issues)
+  * [General](#general)
+    + [TAB Completion](#tab-completion)
+    + [File/Directory Names](#file-directory-names)
+    + [Local vs. Remote](#local-vs-remote)
+  * [Shell Usage](#shell-usage)
+    + [Help](#help)
+    + [Prefixes](#prefixes)
+    + [Running and connecting](#running-and-connecting)
+    + [REPL](#repl)
+    + [Scripting](#scripting)
+    + [Sample use](#sample-use)
+  * [Running the Shell in a Virtual Environment](#running-the-shell-in-a-virtual-environment)
+  * [Python 2 support](#python-2-support)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
+## Main features:
 
 * Support for serial connections (ESP8266, WiPi and LoPy)
 * Support for websockets (via WebREPL) connections (ESP8266 only)
