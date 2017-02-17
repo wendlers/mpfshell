@@ -1,24 +1,22 @@
 # mpfshell
-2016-06-21, sw@kaltpost.de
+2016-06-21, sw@kaltpost.de. Forkbase
+2017-02-17, latest version. Forked by and modified for LoPy use by github.com/PMunch
 
-A simple shell based file explorer for ESP8266 and WiPy 
-[Micropython](https://github.com/micropython/micropython) based devices.
+A simple shell based file explorer for ESP8266, WiPy, and LoPy [Micropython](https://github.com/micropython/micropython) based devices.
 
-The shell is a helper for up/downloading files to the ESP8266 (over serial line and Websockets) 
-and WiPy (serial line and telnet). It basically offers commands to list and upload/download 
-files on the flash FS of the device.
+The shell is a helper for up/downloading files to the ESP8266 (over serial line and Websockets) and WiPy/LoPy (serial line and telnet). It basically offers commands to list and upload/download files on the flash FS of the device.
 
 ![mpfshell](./doc/screenshot.png)
 
 Main features:
 
-* Support for serial connections (ESP8266 and WiPi)
+* Support for serial connections (ESP8266, WiPi and LoPy)
 * Support for websockets (via WebREPL) connections (ESP8266 only)
-* Support for telnet connections (WiPy only)
+* Support for telnet connections (WiPy and LoPy only)
 * Full directory handling (enter, create, remove)
 * Transfer (upload/download) of multiple files matching a reg.-exp.
-* All files are transferred in binary mode, and thus it should be 
-  possible to also upload pre-compiled code (.mpy) too.
+* Transfer (upload/download) of moltiple files and folders recursively
+* All files are transferred in python safe mode, and thus it should be possible to also upload pre-compiled code (.mpy) too. __Note__: Using .mpy files require firmware support from MicroPython. LoPy and probably WiPy official builds does not have this.
 * Integrated REPL (supporting a workflow like: upload changed files, enter REPL, test, exit REPL, upload ...)
 * Fully scriptable
 * Tab-completion
@@ -26,40 +24,29 @@ Main features:
 * Best of all: it comes with color
 
 
-__Note__: The software is mainly tested on Ubunto 16.04 LTS. However, there is basic Windows support
-(tested with Python 3.5 and PySerial 3.1), but some of the keys (e.g. Tab are note working as 
-expected yet).
+__Note__: This version is tested on Manjaro and Windows but only supports Python 3. Some setups are known to not work with tab-completion
 
 ## Requirements
 
 General:
 
-* ESP8266 or WiPy board running latest [Micropython](https://github.com/micropython/micropython)
-* For the ESP8266 firware build from the repository, please not, that WebREPL is not started
-  by default. For more information see the [quickstart](http://micropython.org/resources/docs/en/latest/esp8266/esp8266/quickref.html#webrepl-web-browser-interactive-prompt).
-* For the WiPy, please note, that you need to enable REPL on UART if you intend to connect
-  via serial line to the WiPy (see [here](http://micropython.org/resources/docs/en/latest/wipy/wipy/tutorial/repl.html))
+* ESP8266 or WiPy/LoPy board running latest [Micropython](https://github.com/micropython/micropython)
+* For the ESP8266 firware build from the repository, please not, that WebREPL is not started by default. For more information see the [quickstart](http://micropython.org/resources/docs/en/latest/esp8266/esp8266/quickref.html#webrepl-web-browser-interactive-prompt).
+* For the WiPy/LoPy, please note, that you need to enable REPL on UART if you intend to connect
+  via serial line to the WiPy/LoPy (see [here](http://micropython.org/resources/docs/en/latest/wipy/wipy/tutorial/repl.html))
 
 For the shell:
 
-* Python >= 2.7 or Python >= 3.4
-* The PySerial library >= 2.7 (sudo pip install pyserial)
-* The colorama library >= 0.3.6 (sudo pip install colorama)
-* The websocket-client library >= 0.35.0 (sudo pip install websocket-client)
+* Python >= 3.4
+* The PySerial library >= 2.7 (sudo pip3 install pyserial)
+* The colorama library >= 0.3.6 (sudo pip3 install colorama)
+* The websocket-client library >= 0.35.0 (sudo pip3 install websocket-client)
 
-__IMPORTANT__: PySerial versions before 2.7 really don't work!!! It is highly
-recommended to use PySerial version 3.x on Python2 and Python3.
+__IMPORTANT__: PySerial versions before 2.7 really don't work!!! It is highly recommended to use PySerial version 3.x and Python3.
  
 __Note__: The tools only works if the REPL is accessible on the device!
 
 ## Installing
-
-To install this tool for __Python 2__, execute the following:
-
-	sudo pip install pyserial
-    sudo pip install colorama
-    sudo pip install websocket_client
-    sudo python setup.py install
 
 To install this tool for __Python 3__, execute the following:
 
@@ -70,20 +57,18 @@ To install this tool for __Python 3__, execute the following:
 
 ## Known Issues
 
-* For PySerial 2.6 the REPL is deactivated since Miniterm which comes with 2.6 
-    seams broken.
+* Some setups don't have tab-completion, working on figuring out why
+* For PySerial 2.6 the REPL is deactivated since Miniterm which comes with 2.6 seams broken.
 
 ## General
 
 ### TAB Completion
 
-The shell supports TAB completion for commands and file names.
-So it totally is worth it pressing TAB-TAB every now and then :-)
+The shell supports TAB completion for commands and file names. So it totally is worth it pressing TAB-TAB every now and then. This feature is known to not work for all setups, why is still unclear.
 
 ### File/Directory Names
 
-File-names including whitespaces are supported, but such names need to be enclosed
-in quotes. E.g. accessing a file named "with white space.txt" needs to quoted:
+File-names including whitespaces are supported, but such names need to be enclosed in quotes. E.g. accessing a file named "with white space.txt" needs to quoted:
 
     get "with white space.txt"
     put "with white space.txt" without-white-space.txt
@@ -92,21 +77,43 @@ in quotes. E.g. accessing a file named "with white space.txt" needs to quoted:
 The following characters are accepted for file and directory names:
 
     A-Za-z0-9 _%#~@/\$!\*\.\+\-
-    
+
+The use of . and .. is currently not supported for file names in get and put commands.
+
+### Local vs. Remote
+
+In mpfshell terminology the machine running mpfshell is local and the device connected is remote. This matters when you want to use put and get commands in order to get the arguments right. When using the shell many of the commands can also be prefaced with `l` in order do use a local command. Examples of this is `lls` and `lcd` which lists and changes directory respectively on the machine running mpfshell.
+
 ## Shell Usage
 
-__Note:__ Since version 0.7.1, the shell offers caching for file and
-directory names. It is now enabled by default. To disable caching, 
-add the `--nocache` flag on the command line.
+### Help
+
+If you are stuck you can use the `help` command which shows you all available commands and can be used in conjunction with commands like `help cd` to see what the do.
+
+    mpfs> help
+    mpfs> help <command>
+
+### Prefixes
+
+Some commands come in multiple version. Here are some common prefixes
+
+* `m` are regex matching commands. They take a regex and applies their command to the matching elements.
+* `l` are local commands. These are commands that run on the host machine.
+* `r` are recursive commands. These works on all files and directories recursively.
+    
+### Running and connecting
+
+__Note:__ Since version 0.7.1, the shell offers caching for file and directory names. It is now enabled by default. To disable caching, add the `--nocache` flag on the command line. In some cases the cash is not properly invalidated and old data could be present. For debugging purposes please use `--nocache`.
 
 Start the shell with:
 
     mpfshell
 
-At the shell prompt, first connect to the device. E.g. to connect 
-via serail line:
+At the shell prompt, first connect to the device. E.g. to connect via serial line:
 
     mpfs> open ttyUSB0
+
+__Note__: On Linux machines ttyUSBX might not be owned by the user. Either run mpfshell as root (discouraged), or add your user to the appropriate group. A good way to do this is to run `ls -l /dev | grep ttyUSB` and see which group it belongs do (typically dialout or uucp) and then add it according to your distribution documentation.
     
 Or connect via websocket (ESP8266 only):
 
@@ -116,9 +123,47 @@ Or connect vial telnet (WiPy only):
 
     mpfs> open tn:192.168.1.1,micro,python
     
-__Note__: Login and password are optional. If left out, they will be asked for. 
+__Note__: Login and password are optional. If left out, they will be asked for.
 
-Now you can list the files on the device with:
+### REPL
+	
+Since this is MicroPython there is also a REPL available. To access the REPL simply use:
+
+    repl
+    
+To exit REPL and return to the file shell use `Ctrl+Alt+]`. To soft reboot the device while in the REPL use `Ctrl+D`, this will run the main.py file and is a good way to test code.
+
+### Scripting
+
+In order to be easier to use with your existing editor mpfshell is also scriptable. This means that you don't have to enter the interactive mode and manually type out commands. Automated build systems or simple editor shortcuts can benefit greatly from this.
+
+E.g. to connect to the device, and then enter the shell:
+
+    mpfshell -c "open ttyUSB0"
+    
+Or to copy the file "boot.py" to the device, and don't enter the shell at all:
+
+    mpfshell -n -c "open ttyUSB0; put boot.py"
+
+It is also possible to put multiple shell commands in a file, and then execute
+them from that file.
+ 
+E.g. creating a file called "myscript.mpf":
+
+    open ttyUSB0 
+    put boot.py
+    put main.py
+    ls
+    
+And execute it with:
+
+    mpfshell -s myscript.mpf 
+
+### Sample use
+
+Here are some examples on what you can do once connected to a device with mpfshell.
+
+You can list the files in the current directory with:
 
     mpfs> ls
 
@@ -170,51 +215,19 @@ See which is the current remote directory:
 
     mpfs> pwd
 
-Remove a remote directory:
+Remove a remote file or directory:
 
     mpfs> rm test
     
-__Note__: The directory to delete needs to be empty!
+__Note__: Directories to delete needs to be empty!
+
+Remove a remote directory recursively:
+
+	mpfs> rmr test
 
 To navigate on the local filesystem, use:
 
     lls, lcd lpwd
-
-Enter REPL:
-
-    repl
-    
-To exit REPL and return to the file shell use Ctrl+Alt+] 
-
-For a full list of commands use:
-
-    mpfs> help
-    mpfs> help <command>
-
-The shell is also scriptable.
-
-E.g. to execute a command, and then enter the shell:
-
-    mpfshell -c "open ttyUSB0"
-    
-Or to copy the file "boot.py" to the device, and don't enter the shell at all:
-
-    mpfshell -n -c "open ttyUSB0; put boot.py"
-
-It is also possible to put a bunch of shell commands in a file, and then execute
-them from that file.
- 
-E.g. creating a file called "myscript.mpf":
-
-    open ttyUSB0 
-    put boot.py
-    put main.py
-    ls
-    
-And execute it with:
-
-    mpfshell -s myscript.mpf    
-
 
 ## Running the Shell in a Virtual Environment
 
@@ -230,7 +243,7 @@ Create a new virtual environment:
 
     pyvenv venv
     
-Activate it (so ervery following `pip3 install` goes to the new virtuel environment):
+Activate it (so the following `pip3 install` commands goes to the new virtuel environment):
 
     source venv/bin/activate
     
@@ -244,4 +257,8 @@ Now run the shell with the following command:
 
     python3 -m mp.mpfshell
     
-__Note:__ The environment has always be activated with the above command.
+__Note__: The environment always need to be activated with the above `source` command.
+
+## Python 2 support
+
+The original version of this script included support for Python2. This support was unknowingly broken at some point during the rewrite. However since Python3 came out in 2008, almost 10 years ago, we've decided to not strive to be Python2 compatible and rather focus on creating new features and improving the software. If you still need Python2 support for something and would like to contribute patches to make it compatible please feel free to do so but officially Python2 support is dead.
