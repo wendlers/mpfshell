@@ -7,8 +7,6 @@ A simple shell based file explorer for ESP8266, WiPy, and LoPy [Micropython](htt
 
 The shell is a helper for up/downloading files to the ESP8266 (over serial line and Websockets) and WiPy/LoPy (serial line and telnet). It basically offers commands to list and upload/download files on the flash FS of the device.
 
-![mpfshell](./doc/screenshot.png)
-
 - [mpfshell](#mpfshell)
   * [Main features:](#main-features-)
   * [Requirements](#requirements)
@@ -20,7 +18,7 @@ The shell is a helper for up/downloading files to the ESP8266 (over serial line 
     + [Local vs. Remote](#local-vs-remote)
   * [Shell Usage](#shell-usage)
     + [Help](#help)
-    + [Prefixes](#prefixes)
+    + [Prefixes and Suffixes](#prefixes-and-suffixes)
     + [Running and connecting](#running-and-connecting)
     + [REPL](#repl)
     + [Scripting](#scripting)
@@ -115,13 +113,13 @@ If you are stuck you can use the `help` command which shows you all available co
     mpfs> help
     mpfs> help <command>
 
-### Prefixes
+### Prefixes and Suffixes
 
-Some commands come in multiple version. Here are some common prefixes
+Some commands come in multiple version. Here are some common prefixes and suffixes that distinguish certain commands
 
-* `m` are regex matching commands. They take a regex and applies their command to the matching elements.
-* `l` are local commands. These are commands that run on the host machine.
-* `r` are recursive commands. These works on all files and directories recursively.
+* `m` prefix is used for regex matching commands. They take a regex and applies their command to the matching elements.
+* `l` prefix is used for local commands. These are commands that run on the host machine.
+* `r` suffix is used for recursive commands. These works on all files and directories recursively.
     
 ### Running and connecting
 
