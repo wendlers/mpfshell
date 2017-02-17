@@ -53,7 +53,7 @@ General:
 * ESP8266 or WiPy/LoPy board running latest [Micropython](https://github.com/micropython/micropython)
 * For the ESP8266 firware build from the repository, please not, that WebREPL is not started by default. For more information see the [quickstart](http://micropython.org/resources/docs/en/latest/esp8266/esp8266/quickref.html#webrepl-web-browser-interactive-prompt).
 * For the WiPy/LoPy, please note, that you need to enable REPL on UART if you intend to connect
-  via serial line to the WiPy/LoPy (see [here](http://micropython.org/resources/docs/en/latest/wipy/wipy/tutorial/repl.html))
+  via serial line to the WiPy/LoPy (see [here](http://micropython.org/resources/docs/en/latest/wipy/wipy/tutorial/repl.html)). This is done by default in boot.py on new versions of the firmware.
 
 For the shell:
 
@@ -139,7 +139,7 @@ Or connect via websocket (ESP8266 only):
 
     mpfs> open ws:192.168.1.1,python
     
-Or connect vial telnet (WiPy only):
+Or connect via telnet (WiPy/LoPy only):
 
     mpfs> open tn:192.168.1.1,micro,python
     
