@@ -175,7 +175,7 @@ class MpFileExplorer(Pyboard):
                     try:
 
                         # if it is a dir, it could be listed with "os.listdir"
-                        self.eval("os.listdir('%s/%s')" % (self.dir, f))
+                        self.eval("os.listdir('%s/%s')" % (self.dir.rstrip('/'), f))
                         if add_details:
                             files.append((f, 'D'))
                         else:
@@ -200,7 +200,7 @@ class MpFileExplorer(Pyboard):
                     try:
 
                         # if it is a file, "os.listdir" must fail
-                        self.eval("os.listdir('%s/%s')" % (self.dir, f))
+                        self.eval("os.listdir('%s/%s')" % (self.dir.rstrip('/'), f))
 
                     except PyboardError as e:
 
