@@ -111,6 +111,7 @@ class MpFileShell(cmd.Cmd):
             else:
                 self.fe = MpFileExplorer(port, self.reset)
             print("Connected to %s" % self.fe.sysname)
+            self.__set_prompt_path()
         except PyboardError as e:
             logging.error(e)
             self.__error(str(e))

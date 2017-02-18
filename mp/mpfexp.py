@@ -82,7 +82,7 @@ class MpFileExplorer(Pyboard):
         except Exception as e:
             raise ConError(e)
 
-        self.dir = "/"
+        self.dir = "/flash"
         self.sysname = None
         self.setup()
 
