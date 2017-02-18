@@ -30,6 +30,7 @@ import binascii
 import getpass
 import logging
 import subprocess
+import ast
 
 from mp.pyboard import Pyboard
 from mp.pyboard import PyboardError
@@ -167,7 +168,7 @@ class MpFileExplorer(Pyboard):
         try:
 
             res = self.eval("os.listdir('%s')" % self.dir)
-            tmp = eval(res)
+            tmp = ast.literal_eval(res.decode('utf-8'))
 
             if add_dirs:
                 for f in tmp:
