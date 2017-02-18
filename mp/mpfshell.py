@@ -46,15 +46,16 @@ from mp.tokenizer import Tokenizer
 class MpFileShell(cmd.Cmd):
 
     def __init__(self, color=False, caching=False, reset=False):
-
-        cmd.Cmd.__init__(self)
+        if color:
+            colorama.init()
+            cmd.Cmd.__init__(self, stdout=colorama.initialise.wrapped_stdout)
+        else:
+            cmd.Cmd.__init__(self)
+        self.use_rawinput = False
 
         self.color = color
         self.caching = caching
         self.reset = reset
-
-        if self.color:
-            colorama.init()
 
         self.fe = None
         self.repl = None
@@ -170,7 +171,7 @@ class MpFileShell(cmd.Cmd):
         """
 
         if not len(args):
-            self.__error("Missing argument: <PORT>")
+            self.__error("Missing argument: <TARGET>")
         else:
             if not args.startswith("ser:/dev/") \
                     and not args.startswith("ser:COM") \
@@ -195,19 +196,26 @@ class MpFileShell(cmd.Cmd):
 
         self.__disconnect()
 
-    def do_ls(self, args):
-        """ls
-        List remote files.
+    def do_ls(self, directory):
+        """ls [directory]
+        List remote files, optionally in directory
         """
 
         if self.__is_open():
+            olddir = self.fe.pwd()
             try:
+                if len(directory)!=0:
+                    self.fe.cd(directory)
+                    
                 files = self.fe.ls(add_details=True)
 
                 if self.fe.pwd() != "/":
                     files = [("..", "D")] + files
 
                 print("\nRemote files in '%s':\n" % self.fe.pwd())
+
+                # Sort alphabetically, then sort folders over files
+                files = sorted(sorted(files,key=lambda file: file[0]), key=lambda file: file[1])
 
                 for elem, type in files:
                     if type == 'F':
@@ -226,6 +234,66 @@ class MpFileShell(cmd.Cmd):
             except IOError as e:
                 self.__error(str(e))
 
+            if len(directory)!=0:
+                self.fe.cd(olddir)
+
+    def do_tree(self, directory):
+        """tree [directory]
+        List remote files recursively, optionally in directory
+        """
+
+        if self.__is_open():
+            olddir = self.fe.pwd()
+            if len(directory)!=0:
+                self.fe.cd(directory)
+            else:
+                directory = self.fe.pwd()
+
+            self.rec_tree(directory)
+
+            if len(directory)!=0:
+                self.fe.cd(olddir)
+    def rec_tree(self,directory,prefix=""):
+        try:
+            olddir = self.fe.pwd()
+            self.fe.cd(directory)
+            files = self.fe.ls(add_details=True)
+            if self.color:
+                print(colorama.Fore.MAGENTA + ("%s%s" % (prefix, self.fe.pwd().split("/")[-1])) + colorama.Fore.RESET)
+            else:
+                print("%s%s" % (prefix, self.fe.pwd().split("/")[-1]))
+
+            if len(prefix)>=4:
+                if prefix[-4]=='└':
+                    prefix = prefix[:-4]+' '*4
+            files = sorted(sorted(files,key=lambda file: file[0]), key=lambda file: file[1])
+
+            i = 0
+            for elem, type in files:
+                if type == 'F':
+                    if len(prefix)>=3:
+                        fprefix = prefix[:-4]+(' ' if prefix[-4] == ' ' else '│' )+' '*3
+                    else:
+                        fprefix = prefix
+                    if len(files)==i+1:
+                        fprefix = fprefix+"└── "
+                    else:
+                        fprefix = fprefix+"├── "
+                        
+                    if self.color:
+                        print(colorama.Fore.CYAN + ("%s%s" % (fprefix, elem)) + colorama.Fore.RESET)
+                    else:
+                        print("%s%s" % (fprefix, elem))
+                else:
+                    if len(files)==i+1:
+                        self.rec_tree(self.fe._fqn(elem),prefix+"└── ")
+                    else:
+                        self.rec_tree(self.fe._fqn(elem),prefix+"├── ")
+                i+=1
+            self.fe.cd(olddir)
+
+        except IOError as e:
+            self.__error(str(e))
     def do_pwd(self, args):
         """pwd
          Print current remote directory.
@@ -251,6 +319,8 @@ class MpFileShell(cmd.Cmd):
                 self.fe.cd(s_args[0])
                 self.__set_prompt_path()
             except IOError as e:
+                self.__error(str(e))
+            except RemoteIOError as e:
                 self.__error(str(e))
 
     def complete_cd(self, *args):
@@ -354,15 +424,32 @@ class MpFileShell(cmd.Cmd):
                 self.__error("Only one ore two arguments allowed: <LOCAL FILE> [<REMOTE FILE>]")
                 return
 
-            lfile_name = s_args[0]
+            try:
+                self.fe.put(src=s_args[0], dst=(s_args[1] if len(s_args)>1 else None))
+            except IOError as e:
+                self.__error(str(e))
 
-            if len(s_args) > 1:
-                rfile_name = s_args[1]
-            else:
-                rfile_name = lfile_name
+    def do_putr(self, args):
+        """putr <LOCAL DIRECTORY> [<REMOTE DIRECTORY>]
+        Upload local directory recursively. If the second parameter is given,
+        its value is used for the remote directory name. Otherwise the
+        remote directory will be named the same as the local directory.
+        """
+
+        if not len(args):
+            self.__error("Missing arguments: <LOCAL DIRECTORY> [<REMOTE DIRECTORY>]")
+
+        elif self.__is_open():
+
+            s_args = self.__parse_file_names(args)
+            if not s_args:
+                return
+            elif len(s_args) > 2:
+                self.__error("Only one ore two arguments allowed: <LOCAL DIRECTORY> [<REMOTE DIRECTORY>]")
+                return
 
             try:
-                self.fe.put(lfile_name, rfile_name)
+                self.fe.putr(src=s_args[0], dst=(s_args[1] if len(s_args)>1 else None))
             except IOError as e:
                 self.__error(str(e))
 
@@ -407,15 +494,31 @@ class MpFileShell(cmd.Cmd):
                 self.__error("Only one ore two arguments allowed: <REMOTE FILE> [<LOCAL FILE>]")
                 return
 
-            rfile_name = s_args[0]
+            try:
+                self.fe.get(src=s_args[0], dst=(s_args[1] if len(s_args)>1 else None))
+            except IOError as e:
+                self.__error(str(e))
 
-            if len(s_args) > 1:
-                lfile_name = s_args[1]
-            else:
-                lfile_name = rfile_name
+    def do_getr(self,args):
+        """get <REMOTE DIRECTORY> [<LOCAL DIRECTORY>]
+        Download remote directory recursively. If the second parameter is given,
+        its value is used for the local directory name. Otherwise the
+        locale directory will be named the same as the remote directory.
+        """
+        if not len(args):
+            self.__error("Missing arguments: <REMOTE DIRECTORY> [<LOCAL DIRECTORY>]")
+
+        elif self.__is_open():
+
+            s_args = self.__parse_file_names(args)
+            if not s_args:
+                return
+            elif len(s_args) > 2:
+                self.__error("Only one ore two arguments allowed: <REMOTE DIRECTORY> [<LOCAL DIRECTORY>]")
+                return
 
             try:
-                self.fe.get(rfile_name, lfile_name)
+                self.fe.getr(src=s_args[0], dst=(s_args[1] if len(s_args)>1 else None))
             except IOError as e:
                 self.__error(str(e))
 
@@ -447,10 +550,10 @@ class MpFileShell(cmd.Cmd):
         return [i for i in files if i.startswith(args[0])]
 
     def do_rm(self, args):
-        """rm <REMOTE FILE or DIR>
-        Delete a remote file or directory.
+        """rm <REMOTE FILE>
+        Delete a remote file or empty directory.
 
-        Note: only empty directories could be removed.
+        Note: to delete directories recursively see rmr.
         """
 
         if not len(args):
@@ -466,6 +569,31 @@ class MpFileShell(cmd.Cmd):
 
             try:
                 self.fe.rm(s_args[0])
+            except IOError as e:
+                self.__error(str(e))
+            except PyboardError:
+                self.__error("Unable to send request to %s" % self.fe.sysname)
+
+    def do_rmr(self, args):
+        """rm <REMOTE DIR>
+        Delete a remote directory recursively.
+
+        Note: to delete single files and empty directories see rm.
+        """
+
+        if not len(args):
+            self.__error("Missing argument: <REMOTE DIRECTORY>")
+        elif self.__is_open():
+
+            s_args = self.__parse_file_names(args)
+            if not s_args:
+                return
+            elif len(s_args) > 1:
+                self.__error("Only one argument allowed: <REMOTE DIRECTORY>")
+                return
+
+            try:
+                self.fe.rmr(s_args[0])
             except IOError as e:
                 self.__error(str(e))
             except PyboardError:
@@ -616,6 +744,16 @@ class MpFileShell(cmd.Cmd):
                 self.fe.mpy_cross(s_args[0])
             except IOError as e:
                 self.__error(str(e))
+
+    #def do_crash(self, args):
+    #    """crash
+    #    Runs some test code which likely crashes
+    #    """
+    #    if self.__is_open():
+    #        try:
+    #            self.fe.crash()
+    #        except IOError as e:
+    #            self.__error(str(e))     
 
     def complete_mpyc(self, *args):
         files = [o for o in os.listdir(".") if (os.path.isfile(os.path.join(".", o)) and o.endswith(".py"))]
