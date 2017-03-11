@@ -32,7 +32,7 @@ if serial.VERSION.startswith("2."):
 
     class Term(Miniterm):
 
-        def __init__(self, serial_instance, echo = False, eol = 'crlf'):
+        def __init__(self, serial_instance, echo=False, eol='crlf'):
 
             self.serial = serial_instance
 

@@ -33,6 +33,7 @@ import platform
 import sys
 import serial
 import logging
+import platform
 
 from mp import version
 from mp.mpfexp import MpFileExplorer
@@ -51,7 +52,9 @@ class MpFileShell(cmd.Cmd):
             cmd.Cmd.__init__(self, stdout=colorama.initialise.wrapped_stdout)
         else:
             cmd.Cmd.__init__(self)
-        self.use_rawinput = False
+
+        if platform.system() == 'Windows':
+            self.use_rawinput = False
 
         self.color = color
         self.caching = caching
