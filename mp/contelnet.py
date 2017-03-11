@@ -42,7 +42,8 @@ class ConTelnet(ConBase):
             self.read = self.__read3
 
         self.tn = telnetlib.Telnet(ip)
-        if user=='':
+
+        if user == '':
             self.fifo = deque()
             return
 
