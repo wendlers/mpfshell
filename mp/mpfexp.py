@@ -173,9 +173,10 @@ class MpFileExplorer(Pyboard):
         self.enter_raw_repl()
         self.exec_("import os, sys, ubinascii")
 
-        # new version mounts files on /flash so lets set dir based on where we are in
-        # filesystem
-        self.dir = self.eval("os.getcwd()").decode('utf8')
+        # New version mounts files on /flash so lets set dir based on where we are in
+        # filesystem.
+        # Using the "path.join" to make sure we get "/" if "os.getcwd" returns "".
+        self.dir = os.path.join("/", self.eval("os.getcwd()").decode('utf8'))
 
         self.__set_sysname()
 

@@ -43,6 +43,10 @@ class ConTelnet(ConBase):
 
         self.tn = telnetlib.Telnet(ip)
 
+        if user == '':
+            self.fifo = deque()
+            return
+
         if b'Login as:' in self.tn.read_until(b'Login as:', timeout=5.0):
             self.tn.write(bytes(user.encode('ascii')) + b"\r\n")
 
