@@ -147,13 +147,7 @@ class MpFileExplorer(Pyboard):
         return con
 
     def _fqn(self, name):
-
-        if self.dir.endswith("/"):
-            fqn = self.dir + name
-        else:
-            fqn = self.dir + "/" + name
-
-        return fqn
+        return os.path.join(self.dir, name)
 
     def __set_sysname(self):
         self.sysname = self.eval("os.uname()[0]").decode('utf-8')
@@ -244,14 +238,20 @@ class MpFileExplorer(Pyboard):
     def rm(self, target):
 
         try:
-            self.eval("os.remove('%s')" % self._fqn(target))
+            # 1st try to delete it as a file
+            self.eval("os.remove('%s')" % (self._fqn(target)))
         except PyboardError as e:
-            if _was_file_not_existing(e):
-                raise RemoteIOError("No such file or directory: %s" % target)
-            elif "EACCES" in str(e):
-                raise RemoteIOError("Directory not empty: %s" % target)
-            else:
-                raise e
+            try:
+                # 2nd see if it is empty dir
+                self.eval("os.rmdir('%s')" % (self._fqn(target)))
+            except PyboardError as e:
+                # 3rd report error if nor successful
+                if _was_file_not_existing(e):
+                    raise RemoteIOError("No such file or directory: %s" % target)
+                elif "EACCES" in str(e):
+                    raise RemoteIOError("Directory not empty: %s" % target)
+                else:
+                    raise e
 
     def mrm(self, pat, verbose=False):
 

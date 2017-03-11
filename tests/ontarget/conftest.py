@@ -68,12 +68,14 @@ def rm(path):
             try:
                 os.remove(path + '/' +  f)
             except:
-                rm(path + '/' + f)
-                os.remove(path + '/' +  f)
+                try:
+                    os.rmdir(path + '/' +  f)
+                except:
+                    rm(path + '/' + f)
 """)
 
         fe.exec_("import pytest")
-        fe.exec_("pytest.rm('')")
+        fe.exec_("pytest.rm(os.getcwd())")
 
 
 @pytest.fixture(scope="function")
