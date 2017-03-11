@@ -9,7 +9,7 @@ setup(name='mpfshell',
       author='Stefan Wendler',
       author_email='sw@kaltpost.de',
       url='https://www.kaltpost.de/',
-      requires=['pyserial', 'colorama', 'websocket_client'],
+      install_requires=['pyserial', 'colorama', 'websocket_client'],
       packages=['mp'],
       scripts=['mpfshell'],
       )
