@@ -29,7 +29,6 @@ import os
 import argparse
 import colorama
 import glob
-import platform
 import sys
 import serial
 import logging
