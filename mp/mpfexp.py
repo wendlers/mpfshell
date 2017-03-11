@@ -67,7 +67,7 @@ class MpFileExplorer(Pyboard):
         except Exception as e:
             raise ConError(e)
 
-        self.dir = "/"
+        self.dir = None
         self.sysname = None
         self.setup()
 
@@ -146,7 +146,7 @@ class MpFileExplorer(Pyboard):
     def close(self):
 
         Pyboard.close(self)
-        self.dir = "/"
+        self.dir = None
 
     def teardown(self):
 
@@ -157,6 +157,11 @@ class MpFileExplorer(Pyboard):
 
         self.enter_raw_repl()
         self.exec_("import os, sys, ubinascii")
+
+        # new version mounts files on /flash so lets set dir based on where we are in
+        # filesystem
+        self.dir = self.eval("os.getcwd()").decode('utf8')
+
         self.__set_sysname()
 
     @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
