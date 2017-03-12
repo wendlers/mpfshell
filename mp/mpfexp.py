@@ -42,17 +42,18 @@ from mp.retry import retry
 
 
 def _was_file_not_existing(exception):
-    """Helper function used to check for ENOENT (file doesn't exist),
+    """
+    Helper function used to check for ENOENT (file doesn't exist),
     ENODEV (device doesn't exist, but handled in the same way) or
     EINVAL errors in an exception. Treat them all the same for the
     time being. TODO: improve and nuance.
 
-    Returns a boolean.
-
+    :param  exception:      exception to examine
+    :return:                True if non-existing
     """
 
     stre = str(exception)
-    return any(err in stre for err in ('ENOENT', 'ENODEV', 'EINVAL'))
+    return any(err in stre for err in ('ENOENT', 'ENODEV', 'EINVAL', 'OSError:'))
 
 
 class RemoteIOError(IOError):
@@ -247,7 +248,10 @@ class MpFileExplorer(Pyboard):
             except PyboardError as e:
                 # 3rd report error if nor successful
                 if _was_file_not_existing(e):
-                    raise RemoteIOError("No such file or directory: %s" % target)
+                    if self.sysname == "WiPy":
+                        raise RemoteIOError("No such file or directory or directory not empty: %s" % target)
+                    else:
+                        raise RemoteIOError("No such file or directory: %s" % target)
                 elif "EACCES" in str(e):
                     raise RemoteIOError("Directory not empty: %s" % target)
                 else:
