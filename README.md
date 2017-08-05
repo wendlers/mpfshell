@@ -72,7 +72,7 @@ To install this tool in a [virtual environment](https://pypi.python.org/pypi/vir
 
     # Set up the virtual environment. Replace $python_global with the path to your Python executable. "venv" is the name of the subdirectory that will be created, and can be anything.
     $python_global -m virtualenv venv
-	sudo pip install pyserial
+    sudo pip install pyserial
     sudo pip install colorama
     sudo pip install websocket_client
     # Tell disutils to use the current environment's Python executable,
