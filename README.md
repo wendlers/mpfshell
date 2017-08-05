@@ -75,7 +75,7 @@ To install this tool in a [virtual environment](https://pypi.python.org/pypi/vir
     sudo pip install pyserial
     sudo pip install colorama
     sudo pip install websocket_client
-    # Tell disutils to use the current environment's Python executable,
+    # Tell distutils to use the current environment's Python executable,
     # which will then be handled by virtualenv.
     sudo python setup.py build -e "/usr/bin/env python"
     sudo python setup.py install
