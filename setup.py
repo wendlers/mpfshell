@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
 from mp import version
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
+
+
 
 setup(name='mpfshell',
       version=version.FULL,

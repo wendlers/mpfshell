@@ -67,6 +67,18 @@ To install this tool for __Python 3__, execute the following:
     sudo pip3 install colorama
     sudo pip3 install websocket_client
     sudo python3 setup.py install
+    
+To install this tool in a [virtual environment](https://pypi.python.org/pypi/virtualenv), execute the following steps:
+
+    # Set up the virtual environment. Replace $python_global with the path to your Python executable. "venv" is the name of the subdirectory that will be created, and can be anything.
+    $python_global -m virtualenv venv
+	sudo pip install pyserial
+    sudo pip install colorama
+    sudo pip install websocket_client
+    # Tell disutils to use the current environment's Python executable,
+    # which will then be handled by virtualenv.
+    sudo python setup.py build -e "/usr/bin/env python"
+    sudo python setup.py install
 
 ## Known Issues
 
