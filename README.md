@@ -43,12 +43,9 @@ General:
 For the shell:
 
 * Python >= 2.7 or Python >= 3.4
-* The PySerial library >= 2.7 (sudo pip install pyserial)
-* The colorama library >= 0.3.6 (sudo pip install colorama)
-* The websocket-client library >= 0.35.0 (sudo pip install websocket-client)
+* The PySerial, colorama, and websocket-client packages (`pip install -r requirements.txt`)
 
-__IMPORTANT__: PySerial versions before 2.7 really don't work!!! It is highly
-recommended to use PySerial version 3.x on Python2 and Python3.
+__IMPORTANT__: It is highly recommended to use PySerial version 3.x on Python 2 and 3.
  
 __Note__: The tools only works if the REPL is accessible on the device!
 
@@ -56,16 +53,12 @@ __Note__: The tools only works if the REPL is accessible on the device!
 
 To install this tool for __Python 2__, execute the following:
 
-	sudo pip install pyserial
-    sudo pip install colorama
-    sudo pip install websocket_client
+	sudo pip install -r requirements.txt
     sudo python setup.py install
 
 To install this tool for __Python 3__, execute the following:
 
-	sudo pip3 install pyserial
-    sudo pip3 install colorama
-    sudo pip3 install websocket_client
+	sudo pip3 install -r requirements.txt
     sudo python3 setup.py install
 
 ## Known Issues
