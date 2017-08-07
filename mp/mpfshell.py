@@ -642,6 +642,10 @@ def main():
 
     parser.add_argument("--reset", help="hard reset device via DTR (serial connection only)", action="store_true",
                         default=False)
+    
+    parser.add_argument("-o", "--open", help="directly opens board", metavar="BOARD", action="store", default=None)
+    parser.add_argument("board", help="directly opens board", nargs="?", action="store", default=None)
+    
 
     args = parser.parse_args()
 
@@ -657,6 +661,15 @@ def main():
               % (sys.version_info[0], sys.version_info[1], serial.VERSION))
 
     mpfs = MpFileShell(not args.nocolor, not args.nocache, args.reset)
+    
+    if args.open is not None:
+        if args.board is None:
+            mpfs.do_open(args.open)
+        else:
+            print("Positional argument ({}) takes precedence over --open.".format(args.board))
+    if args.board is not None:
+        mpfs.do_open(args.board)
+    
 
     if args.command is not None:
 
