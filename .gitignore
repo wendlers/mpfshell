@@ -63,3 +63,5 @@ target/
 .idea/*
 venv
 *.swp
+MANIFEST
+

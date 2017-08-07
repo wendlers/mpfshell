@@ -51,12 +51,24 @@ __Note__: The tools only works if the REPL is accessible on the device!
 
 ## Installing
 
-To install this tool for __Python 2__, execute the following:
+### From PyPi 
+
+To install the latest release from PyPi:
+
+    sudo pip install mpfshell
+
+### From Source
+
+Clone this repository:
+
+    git clone https://github.com/wendlers/mpfshell
+
+To install for __Python 2__, execute the following:
 
     sudo pip install -r requirements.txt
     sudo python setup.py install
 
-To install this tool for __Python 3__, execute the following:
+To install for __Python 3__, execute the following:
 
 	sudo pip3 install -r requirements.txt
     sudo python3 setup.py install
