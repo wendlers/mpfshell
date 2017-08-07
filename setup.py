@@ -8,8 +8,11 @@ setup(name='mpfshell',
       description='A simple shell based file explorer ESP8266 and WiPy Micropython devices.',
       author='Stefan Wendler',
       author_email='sw@kaltpost.de',
-      url='https://www.kaltpost.de/',
+      url='https://github.com/wendlers/mpfshell',
+      download_url='https://github.com/wendlers/mpfshell/archive/0.8.1_test.tar.gz',
       install_requires=['pyserial', 'colorama', 'websocket_client'],
       packages=['mp'],
       scripts=['mpfshell'],
-      )
+      keywords=['micropython', 'shell', 'file transfer', 'development'],
+      classifiers=[],
+)
