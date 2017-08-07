@@ -53,7 +53,7 @@ __Note__: The tools only works if the REPL is accessible on the device!
 
 To install this tool for __Python 2__, execute the following:
 
-	sudo pip install -r requirements.txt
+    sudo pip install -r requirements.txt
     sudo python setup.py install
 
 To install this tool for __Python 3__, execute the following:
@@ -222,19 +222,20 @@ Install support for virtual environments:
 Create a new virtual environment:
 
     pyvenv venv
+
+Or you could use `python3 -m virtualenv venv` instead of `pyvenv`.
     
-Activate it (so ervery following `pip3 install` goes to the new virtuel environment):
+Activate it (so ervery following `pip install` goes to the new virtuel environment):
 
     source venv/bin/activate
     
 Now install the dependencies to the virtual environment:
 
-    pip3 install pyserial
-    pip3 install colorama
-    pip3 install websocket_client
+    pip install -r requirements.txt
+    python setup.py install
     
 Now run the shell with the following command:
 
-    python3 -m mp.mpfshell
+    python -m mp.mpfshell
     
-__Note:__ The environment has always be activated with the above command.
+__Note:__ The environment has always to be activated with the above command before using it.
