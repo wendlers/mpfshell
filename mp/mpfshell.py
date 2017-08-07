@@ -379,7 +379,7 @@ class MpFileShell(cmd.Cmd):
         Upload all local files that match the given regular expression.
         The remote files will be named the same as the local files.
 
-        "mput" does not get directories, and it is note recursive.
+        "mput" does not get directories, and it is not recursive.
         """
 
         if not len(args):
@@ -428,7 +428,7 @@ class MpFileShell(cmd.Cmd):
         Download all remote files that match the given regular expression.
         The local files will be named the same as the remote files.
 
-        "mget" does not get directories, and it is note recursive.
+        "mget" does not get directories, and it is not recursive.
         """
 
         if not len(args):
@@ -479,7 +479,7 @@ class MpFileShell(cmd.Cmd):
         """mrm <SELECTION REGEX>
         Delete all remote files that match the given regular expression.
 
-        "mrm" does not delete directories, and it is note recursive.
+        "mrm" does not delete directories, and it is not recursive.
         """
 
         if not len(args):
