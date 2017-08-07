@@ -104,7 +104,7 @@ Start the shell with:
     mpfshell
 
 At the shell prompt, first connect to the device. E.g. to connect 
-via serail line:
+via serial line:
 
     mpfs> open ttyUSB0
     
