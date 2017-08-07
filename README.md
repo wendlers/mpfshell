@@ -43,29 +43,34 @@ General:
 For the shell:
 
 * Python >= 2.7 or Python >= 3.4
-* The PySerial library >= 2.7 (sudo pip install pyserial)
-* The colorama library >= 0.3.6 (sudo pip install colorama)
-* The websocket-client library >= 0.35.0 (sudo pip install websocket-client)
+* The PySerial, colorama, and websocket-client packages (`pip install -r requirements.txt`)
 
-__IMPORTANT__: PySerial versions before 2.7 really don't work!!! It is highly
-recommended to use PySerial version 3.x on Python2 and Python3.
+__IMPORTANT__: It is highly recommended to use PySerial version 3.x on Python 2 and 3.
  
 __Note__: The tools only works if the REPL is accessible on the device!
 
 ## Installing
 
-To install this tool for __Python 2__, execute the following:
+### From PyPi 
 
-	sudo pip install pyserial
-    sudo pip install colorama
-    sudo pip install websocket_client
+To install the latest release from PyPi:
+
+    sudo pip install mpfshell
+
+### From Source
+
+Clone this repository:
+
+    git clone https://github.com/wendlers/mpfshell
+
+To install for __Python 2__, execute the following:
+
+    sudo pip install -r requirements.txt
     sudo python setup.py install
 
-To install this tool for __Python 3__, execute the following:
+To install for __Python 3__, execute the following:
 
-	sudo pip3 install pyserial
-    sudo pip3 install colorama
-    sudo pip3 install websocket_client
+	sudo pip3 install -r requirements.txt
     sudo python3 setup.py install
     
 To install this tool in a [virtual environment](https://pypi.python.org/pypi/virtualenv), execute the following steps:
@@ -116,7 +121,7 @@ Start the shell with:
     mpfshell
 
 At the shell prompt, first connect to the device. E.g. to connect 
-via serail line:
+via serial line:
 
     mpfs> open ttyUSB0
     
@@ -241,19 +246,20 @@ Install support for virtual environments:
 Create a new virtual environment:
 
     pyvenv venv
+
+Or you could use `python3 -m virtualenv venv` instead of `pyvenv`.
     
-Activate it (so ervery following `pip3 install` goes to the new virtuel environment):
+Activate it (so ervery following `pip install` goes to the new virtuel environment):
 
     source venv/bin/activate
     
 Now install the dependencies to the virtual environment:
 
-    pip3 install pyserial
-    pip3 install colorama
-    pip3 install websocket_client
+    pip install -r requirements.txt
+    python setup.py install
     
 Now run the shell with the following command:
 
-    python3 -m mp.mpfshell
+    python -m mp.mpfshell
     
-__Note:__ The environment has always be activated with the above command.
+__Note:__ The environment has always to be activated with the above command before using it.
