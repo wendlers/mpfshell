@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-
 from mp import version
-from distutils.core import setup
+from setuptools import setup
+
 
 setup(name='mpfshell',
       version=version.FULL,
-      description='A simple shell based file explorer for ESP8266 and WiPy Micropython devices.',
+      description='A simple shell based file explorer for ESP8266 and WiPy '
+                  'Micropython devices.',
       author='Stefan Wendler',
       author_email='sw@kaltpost.de',
       url='https://github.com/wendlers/mpfshell',
@@ -15,4 +16,9 @@ setup(name='mpfshell',
       scripts=['mpfshell'],
       keywords=['micropython', 'shell', 'file transfer', 'development'],
       classifiers=[],
-)
+      entry_points={
+        'console_scripts': [
+            'mpfshell=mp.mpfshell:main',
+        ]
+      },
+      )
