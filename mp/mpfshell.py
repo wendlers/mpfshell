@@ -524,6 +524,48 @@ class MpFileShell(cmd.Cmd):
 
     complete_cat = complete_get
 
+    def do_execfile(self, args):
+        """execfile <REMOTE FILE>
+        Execute the contents of a REMOTE file.
+        """
+
+        if not len(args):
+            self.__error("Missing argument: <REMOTE FILE>")
+        elif self.__is_open():
+
+            s_args = self.__parse_file_names(args)
+            if not s_args:
+                return
+            elif len(s_args) > 1:
+                self.__error("Only one argument allowed: <REMOTE FILE>")
+                return
+
+            try:
+                self.fe.exec_(self.fe.gets(s_args[0]))
+            except IOError as e:
+                self.__error(str(e))
+
+    def do_lexecfile(self, args):
+        """lexecfile <LOCAL FILE>
+        Execute the contents of a LOCAL file.
+        """
+
+        if not len(args):
+            self.__error("Missing argument: <LOCAL FILE>")
+        elif self.__is_open():
+
+            s_args = self.__parse_file_names(args)
+            if not s_args:
+                return
+            elif len(s_args) > 1:
+                self.__error("Only one argument allowed: <LOCAL FILE>")
+                return
+
+            try:
+                self.fe.execfile(s_args[0])
+            except IOError as e:
+                self.__error(str(e))
+
     def do_exec(self, args):
         """exec <STATEMENT>
         Execute a Python statement on remote.
