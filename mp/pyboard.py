@@ -67,6 +67,9 @@ class Pyboard:
         while n > 0:
             self.con.read(n)
             n = self.con.inWaiting()
+        
+        # Wait for some time to fix error with D1 mini
+        time.sleep(0.5)
 
         if self.con.survives_soft_reset():
 
