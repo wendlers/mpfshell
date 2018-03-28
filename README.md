@@ -12,7 +12,7 @@ files on the flash FS of the device.
 
 Main features:
 
-* Support for serial connections (ESP8266 and WiPi)
+* Support for serial connections (ESP8266 and WiPy)
 * Support for websockets (via WebREPL) connections (ESP8266 only)
 * Support for telnet connections (WiPy only)
 * Full directory handling (enter, create, remove)
@@ -35,7 +35,7 @@ expected yet).
 General:
 
 * ESP8266 or WiPy board running latest [Micropython](https://github.com/micropython/micropython)
-* For the ESP8266 firware build from the repository, please not, that WebREPL is not started
+* For the ESP8266 firware build from the repository, please note, that WebREPL is not started
   by default. For more information see the [quickstart](http://micropython.org/resources/docs/en/latest/esp8266/esp8266/quickref.html#webrepl-web-browser-interactive-prompt).
 * For the WiPy, please note, that you need to enable REPL on UART if you intend to connect
   via serial line to the WiPy (see [here](http://micropython.org/resources/docs/en/latest/wipy/wipy/tutorial/repl.html))
