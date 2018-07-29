@@ -166,7 +166,8 @@ class MpFileExplorer(Pyboard):
     def setup(self):
 
         self.enter_raw_repl()
-        self.exec_("import os, sys, ubinascii")
+        self.exec_("import os, sys")
+        self.exec_("try:\n    import ubinascii\nexcept ImportError:\n    import binascii as ubinascii")
 
         # New version mounts files on /flash so lets set dir based on where we are in
         # filesystem.
