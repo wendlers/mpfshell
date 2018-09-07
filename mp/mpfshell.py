@@ -45,6 +45,18 @@ from mp.tokenizer import Tokenizer
 
 class MpFileShell(cmd.Cmd):
 
+    def view_all_serial(self):
+        import serial.tools.list_ports
+        print(colorama.Fore.LIGHTCYAN_EX + "\nlooking for computer port...")
+        plist = list(serial.tools.list_ports.comports())
+
+        if len(plist) <= 0:
+            print("serial not found!")
+        else:
+            for serial in plist:
+                print("serial name :", serial[0].lower())
+        print("input ' open", plist[len(plist) - 1][0].lower(), "' and enter connect your BPI:bit.")
+
     def __init__(self, color=False, caching=False, reset=False):
         if color:
             colorama.init()
@@ -66,6 +78,10 @@ class MpFileShell(cmd.Cmd):
         self.__intro()
         self.__set_prompt_path()
 
+        self.do_help(None)
+        print(colorama.Fore.YELLOW + "All support commands, can input help ls or other command if you don't know how to use it(ls).")
+        self.view_all_serial()
+
     def __del__(self):
         self.__disconnect()
 
@@ -73,10 +89,10 @@ class MpFileShell(cmd.Cmd):
 
         if self.color:
             self.intro = '\n' + colorama.Fore.GREEN + \
-                         '** Micropython File Shell v%s, sw@kaltpost.de ** ' % version.FULL + \
+                         '** Micropython File Shell v%s, sw@kaltpost.de & juwan@banana-pi.com ** ' % version.FULL + \
                          colorama.Fore.RESET + '\n'
         else:
-            self.intro = '\n** Micropython File Shell v%s, sw@kaltpost.de **\n' % version.FULL
+            self.intro = '\n** Micropython File Shell v%s, sw@kaltpost.de & juwan@banana-pi.com **\n' % version.FULL
 
         self.intro += '-- Running on Python %d.%d using PySerial %s --\n' \
                        % (sys.version_info[0], sys.version_info[1], serial.VERSION)
@@ -154,15 +170,27 @@ class MpFileShell(cmd.Cmd):
 
         return None
 
-    def do_exit(self, args):
-        """exit
+    def do_q(self, args):
+        """q
+        is the same as quit.
+        """
+        return self.do_quit(args)
+
+    def do_quit(self, args):
+        """quit
         Exit this shell.
         """
         self.__disconnect()
 
         return True
 
-    do_EOF = do_exit
+    do_EOF = do_quit
+
+    def do_o(self, args):
+        """o
+        is the same as open.
+        """
+        return self.do_open(args)
 
     def do_open(self, args):
         """open <TARGET>
@@ -501,6 +529,12 @@ class MpFileShell(cmd.Cmd):
 
         return [i for i in files if i.startswith(args[0])]
 
+    def do_c(self, args):
+        """c
+        is the same as cat.
+        """
+        return self.do_cat(args)
+
     def do_cat(self, args):
         """cat <REMOTE FILE>
         Print the contents of a remote file.
@@ -524,9 +558,15 @@ class MpFileShell(cmd.Cmd):
 
     complete_cat = complete_get
 
+    def do_e(self, args):
+        """e
+        is the same as exec.
+        """
+        return self.do_exec(args)
+
     def do_exec(self, args):
-        """exec <STATEMENT>
-        Execute a Python statement on remote.
+        """exec <Python CODE>
+        Execute a Python CODE on remote.
         """
 
         def data_consumer(data):
@@ -534,20 +574,26 @@ class MpFileShell(cmd.Cmd):
             sys.stdout.write(data.strip("\x04"))
 
         if not len(args):
-            self.__error("Missing argument: <STATEMENT>")
+            self.__error("Missing argument: <Python CODE>")
         elif self.__is_open():
 
             try:
                 self.fe.exec_raw_no_follow(args + "\n")
                 ret = self.fe.follow(None, data_consumer)
-
+                
                 if len(ret[-1]):
-                    self.__error(ret[-1])
+                    self.__error(str(ret[-1].decode('utf-8')))
 
             except IOError as e:
                 self.__error(str(e))
             except PyboardError as e:
                 self.__error(str(e))
+
+    def do_r(self, args):
+        """r
+        is the same as repl.
+        """
+        return self.do_repl(args)
 
     def do_repl(self, args):
         """repl
