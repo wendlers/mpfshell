@@ -36,7 +36,7 @@ class Pyboard:
         if self.con is not None:
             self.con.close()
 
-    def read_until(self, min_num_bytes, ending, timeout=10, data_consumer=None):
+    def read_until(self, min_num_bytes, ending, timeout=1, data_consumer=None):
 
         data = self.con.read(min_num_bytes)
         if data_consumer:
