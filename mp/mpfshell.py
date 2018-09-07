@@ -55,7 +55,7 @@ class MpFileShell(cmd.Cmd):
         else:
             for serial in plist:
                 print("serial name :", serial[0].lower())
-        print("input ' open", plist[len(plist) - 1][0].lower(), "' and enter connect your BPI:bit.")
+            print("input ' open", plist[len(plist) - 1][0].lower(), "' and enter connect your BPI:bit.")
 
     def __init__(self, color=False, caching=False, reset=False):
         if color:

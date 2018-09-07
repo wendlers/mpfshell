@@ -74,21 +74,21 @@ class Pyboard:
             data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n>')
 
             if not data.endswith(b'raw REPL; CTRL-B to exit\r\n>'):
-                print(data)
-                raise PyboardError('could not enter raw repl')
+                # print(data)
+                raise PyboardError('could not enter raw repl, please try again.')
 
             self.con.write(b'\x04')  # ctrl-D: soft reset
             data = self.read_until(1, b'soft reboot\r\n')
             if not data.endswith(b'soft reboot\r\n'):
-                print(data)
-                raise PyboardError('could not enter raw repl')
+                # print(data)
+                raise PyboardError('could not enter raw repl, please try again.')
 
             # By splitting this into 2 reads, it allows boot.py to print stuff,
             # which will show up after the soft reboot and before the raw REPL.
             data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n')
             if not data.endswith(b'raw REPL; CTRL-B to exit\r\n'):
-                print(data)
-                raise PyboardError('could not enter raw repl')
+                # print(data)
+                raise PyboardError('could not enter raw repl, please try again.')
 
         else:
 
@@ -96,8 +96,8 @@ class Pyboard:
             data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n')
 
             if not data.endswith(b'raw REPL; CTRL-B to exit\r\n'):
-                print(data)
-                raise PyboardError('could not enter raw repl')
+                # print(data)
+                raise PyboardError('could not enter raw repl, please try again.')
 
     def exit_raw_repl(self):
         self.con.write(b'\r\x02')  # ctrl-B: enter friendly REPL
@@ -129,7 +129,7 @@ class Pyboard:
         # check we have a prompt
         data = self.read_until(1, b'>')
         if not data.endswith(b'>'):
-            raise PyboardError('could not enter raw repl')
+            raise PyboardError('could not enter raw repl, please try again.')
 
         # write command
         for i in range(0, len(command_bytes), 256):
