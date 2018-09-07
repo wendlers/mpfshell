@@ -55,7 +55,7 @@ class MpFileShell(cmd.Cmd):
         else:
             for serial in plist:
                 print("serial name :", serial[0].lower())
-            print("input ' open", plist[len(plist) - 1][0].lower(), "' and enter connect your BPI:bit.")
+            print("input ' open", plist[len(plist) - 1][0].lower(), "' and enter connect your board.")
 
     def __init__(self, color=False, caching=False, reset=False):
         if color:
@@ -70,7 +70,7 @@ class MpFileShell(cmd.Cmd):
         self.color = color
         self.caching = caching
         self.reset = reset
-
+        self.open_args = None
         self.fe = None
         self.repl = None
         self.tokenizer = Tokenizer()
@@ -122,7 +122,8 @@ class MpFileShell(cmd.Cmd):
 
         try:
             self.__disconnect()
-
+            if(port is None):
+                port = self.open_args
             if self.reset:
                 print("Hard resetting device ...")
             if self.caching:
@@ -171,13 +172,10 @@ class MpFileShell(cmd.Cmd):
         return None
 
     def do_q(self, args):
-        """q
-        is the same as quit.
-        """
         return self.do_quit(args)
 
     def do_quit(self, args):
-        """quit
+        """quit(q)
         Exit this shell.
         """
         self.__disconnect()
@@ -187,13 +185,10 @@ class MpFileShell(cmd.Cmd):
     do_EOF = do_quit
 
     def do_o(self, args):
-        """o
-        is the same as open.
-        """
         return self.do_open(args)
 
     def do_open(self, args):
-        """open <TARGET>
+        """open(o) <TARGET>
         Open connection to device with given target. TARGET might be:
 
         - a serial port, e.g.       ttyUSB0, ser:/dev/ttyUSB0
@@ -211,6 +206,7 @@ class MpFileShell(cmd.Cmd):
 
                 if platform.system() == "Windows":
                     args = "ser:" + args
+                    self.open_args = args
                 else:
                     args = "ser:/dev/" + args
 
@@ -392,11 +388,12 @@ class MpFileShell(cmd.Cmd):
                 rfile_name = s_args[1]
             else:
                 rfile_name = lfile_name
-
             try:
                 self.fe.put(lfile_name, rfile_name)
+                return True
             except IOError as e:
                 self.__error(str(e))
+        return False
 
     def complete_put(self, *args):
         files = [o for o in os.listdir(".") if os.path.isfile(os.path.join(".", o))]
@@ -530,13 +527,10 @@ class MpFileShell(cmd.Cmd):
         return [i for i in files if i.startswith(args[0])]
 
     def do_c(self, args):
-        """c
-        is the same as cat.
-        """
         return self.do_cat(args)
 
     def do_cat(self, args):
-        """cat <REMOTE FILE>
+        """cat(c) <REMOTE FILE>
         Print the contents of a remote file.
         """
 
@@ -558,14 +552,41 @@ class MpFileShell(cmd.Cmd):
 
     complete_cat = complete_get
 
-    def do_e(self, args):
-        """e
-        is the same as exec.
+    def do_rf(self, args):
+        return self.do_runfile(args)
+
+    def do_runfile(self, args):
+        """runfile(rf) <LOCAL FILE>
+        download and running local file in board.
         """
+        if(self.do_put(args)):
+            return self.do_ef(args)
+
+    def do_ef(self, args):
+        return self.do_execfile(args)
+
+    def do_execfile(self, args):
+        """execfile(ef) <REMOTE FILE>
+        Execute a Python filename on remote.
+        """
+        try:
+            return self.do_exec("execfile('%s')" % args)
+        except KeyboardInterrupt as e:
+            pass
+        finally:
+            import time
+            for a in range(5):
+                self.__connect(None)
+                if self.__is_open():
+                    break
+                print(colorama.Fore.GREEN + 'try reconnect... ' + colorama.Fore.RESET)
+                time.sleep(1)
+
+    def do_e(self, args):
         return self.do_exec(args)
 
     def do_exec(self, args):
-        """exec <Python CODE>
+        """exec(e) <Python CODE>
         Execute a Python CODE on remote.
         """
 
@@ -590,13 +611,10 @@ class MpFileShell(cmd.Cmd):
                 self.__error(str(e))
 
     def do_r(self, args):
-        """r
-        is the same as repl.
-        """
         return self.do_repl(args)
 
     def do_repl(self, args):
-        """repl
+        """repl(r)
         Enter Micropython REPL.
         """
 
