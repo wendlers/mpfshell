@@ -390,10 +390,8 @@ class MpFileShell(cmd.Cmd):
                 rfile_name = lfile_name
             try:
                 self.fe.put(lfile_name, rfile_name)
-                return True
             except IOError as e:
                 self.__error(str(e))
-        return False
 
     def complete_put(self, *args):
         files = [o for o in os.listdir(".") if os.path.isfile(os.path.join(".", o))]
@@ -527,7 +525,7 @@ class MpFileShell(cmd.Cmd):
         return [i for i in files if i.startswith(args[0])]
 
     def do_c(self, args):
-        return self.do_cat(args)
+        self.do_cat(args)
 
     def do_cat(self, args):
         """cat(c) <REMOTE FILE>
@@ -553,37 +551,56 @@ class MpFileShell(cmd.Cmd):
     complete_cat = complete_get
 
     def do_rf(self, args):
-        return self.do_runfile(args)
+        self.do_runfile(args)
 
     def do_runfile(self, args):
         """runfile(rf) <LOCAL FILE>
         download and running local file in board.
         """
-        if(self.do_put(args)):
-            return self.do_ef(args)
+        
+        if not len(args):
+            self.__error("Missing arguments: <LOCAL FILE>")
+
+        elif self.__is_open():
+
+            s_args = self.__parse_file_names(args)
+            if not s_args:
+                return
+            elif len(s_args) > 1:
+                self.__error("Only one ore one arguments allowed: <LOCAL FILE> ")
+                return
+
+            lfile_name = s_args[0]
+
+            try:
+                self.fe.put(lfile_name, lfile_name)
+                self.do_ef(args)
+            except IOError as e:
+                self.__error(str(e))
 
     def do_ef(self, args):
-        return self.do_execfile(args)
+        self.do_execfile(args)
 
     def do_execfile(self, args):
         """execfile(ef) <REMOTE FILE>
         Execute a Python filename on remote.
         """
         try:
-            return self.do_exec("execfile('%s')" % args)
+            self.do_exec("execfile('%s')" % args)
         except KeyboardInterrupt as e:
             pass
         finally:
-            import time
-            for a in range(5):
-                self.__connect(None)
-                if self.__is_open():
-                    break
-                print(colorama.Fore.GREEN + 'try reconnect... ' + colorama.Fore.RESET)
-                time.sleep(1)
+            if self.__is_open() is False:
+                import time
+                for a in range(5):
+                    self.__connect(None)
+                    if self.__is_open():
+                        break
+                    print(colorama.Fore.GREEN + 'try reconnect... ' + colorama.Fore.RESET)
+                    time.sleep(1)
 
     def do_e(self, args):
-        return self.do_exec(args)
+        self.do_exec(args)
 
     def do_exec(self, args):
         """exec(e) <Python CODE>
@@ -611,7 +628,7 @@ class MpFileShell(cmd.Cmd):
                 self.__error(str(e))
 
     def do_r(self, args):
-        return self.do_repl(args)
+        self.do_repl(args)
 
     def do_repl(self, args):
         """repl(r)
