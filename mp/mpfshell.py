@@ -142,6 +142,16 @@ class MpFileShell(cmd.Cmd):
             logging.error(e)
             self.__error("Failed to open: %s" % port)
 
+
+    def __reconnect(self):
+        import time
+        for a in range(5):
+            self.__connect(None)
+            if self.__is_open():
+                break
+            print(colorama.Fore.GREEN + 'try reconnect... ' + colorama.Fore.RESET)
+            time.sleep(1)
+
     def __disconnect(self):
 
         if self.fe is not None:
@@ -590,14 +600,7 @@ class MpFileShell(cmd.Cmd):
         except KeyboardInterrupt as e:
             pass
         finally:
-            if self.__is_open() is False:
-                import time
-                for a in range(5):
-                    self.__connect(None)
-                    if self.__is_open():
-                        break
-                    print(colorama.Fore.GREEN + 'try reconnect... ' + colorama.Fore.RESET)
-                    time.sleep(1)
+            self.__reconnect()
 
     def do_e(self, args):
         self.do_exec(args)
