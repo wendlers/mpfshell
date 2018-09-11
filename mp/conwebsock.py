@@ -53,7 +53,7 @@ class ConWebsock(ConBase, threading.Thread):
 
         self.start()
 
-        self.timeout = 3.0
+        self.timeout = 5.0
 
         if b'Password:' in self.read(256, blocking=False):
             self.ws.send(password + "\r")
