@@ -36,7 +36,7 @@ class Pyboard:
         if self.con is not None:
             self.con.close()
 
-    def read_until(self, min_num_bytes, ending, timeout=1, data_consumer=None):
+    def read_until(self, min_num_bytes, ending, timeout=5, data_consumer=None):
 
         data = self.con.read(min_num_bytes)
         if data_consumer:
@@ -60,7 +60,7 @@ class Pyboard:
 
     def enter_raw_repl(self):
 
-        self.con.write(b'\r\x03\x03')  # ctrl-C twice: interrupt any running program
+        self.con.write(b'\r\x04\x03\x03\x03')  # ctrl-C twice: interrupt any running program
 
         # flush input (without relying on serial.flushInput())
         n = self.con.inWaiting()
