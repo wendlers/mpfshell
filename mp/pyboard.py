@@ -60,7 +60,7 @@ class Pyboard:
 
     def enter_raw_repl(self):
 
-        self.con.write(b'\r\x04\x03\x03\x03')  # ctrl-C twice: interrupt any running program
+        self.con.write(b'\r\x03\x03\x03\x03')  # ctrl-C twice: interrupt any running program
 
         # flush input (without relying on serial.flushInput())
         n = self.con.inWaiting()
