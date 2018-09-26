@@ -102,6 +102,9 @@ class Pyboard:
     def exit_raw_repl(self):
         self.con.write(b'\r\x02')  # ctrl-B: enter friendly REPL
 
+    def keyboard_interrupt(self):
+        self.con.write(b'\r\x03\x03\x03')  # ctrl-C: KeyboardInterrupt
+
     def follow(self, timeout, data_consumer=None):
 
         # wait for normal output

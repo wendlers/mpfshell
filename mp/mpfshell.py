@@ -148,7 +148,7 @@ class MpFileShell(cmd.Cmd):
 
     def __reconnect(self):
         import time
-        for a in range(5):
+        for a in range(3):
             self.__connect(None)
             if self.__is_open():
                 break
@@ -599,12 +599,23 @@ class MpFileShell(cmd.Cmd):
         """execfile(ef) <REMOTE FILE>
         Execute a Python filename on remote.
         """
-        try:
-            self.do_exec("execfile('%s')" % args)
-        except KeyboardInterrupt as e:
-            pass
-        finally:
-            self.__reconnect()
+        if self.__is_open():
+            try:
+                try:
+                    self.fe.keyboard_interrupt()
+                    self.do_exec("execfile('%s')" % args)
+                except KeyboardInterrupt as e:
+                    self.fe.keyboard_interrupt()
+
+                try:
+                    ret = self.fe.follow(2)
+                    if len(ret[-1]):
+                        self.__error(str(ret[-1].decode('utf-8')))
+                except PyboardError:
+                    pass
+            finally:
+                if(self.open_args.startswith("ser:")):
+                    self.__reconnect()
 
     def do_e(self, args):
         self.do_exec(args)
