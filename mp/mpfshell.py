@@ -622,7 +622,7 @@ class MpFileShell(cmd.Cmd):
         elif self.__is_open():
 
             try:
-                self.fe.exec_raw_no_follow(args + "\n")
+                self.fe.exec_raw_no_follow("print('Enter remote execution and stop using Ctrl+C.')\n"+ args + "\n")
                 ret = self.fe.follow(None, data_consumer)
                 
                 if len(ret[-1]):
