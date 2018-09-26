@@ -54,8 +54,8 @@ class MpFileShell(cmd.Cmd):
             print("serial not found!")
         else:
             for serial in plist:
-                print("serial name :", serial[0])
-            print("input ' open", plist[len(plist) - 1][0], "' and enter connect your board.")
+                print("serial name :", serial[0].split('/')[-1])
+            print("input ' open", plist[len(plist) - 1][0].split('/')[-1], "' and enter connect your board.")
 
     def __init__(self, color=False, caching=False, reset=False):
         if color:
