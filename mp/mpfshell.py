@@ -64,12 +64,6 @@ class MpFileShell(cmd.Cmd):
         else:
             cmd.Cmd.__init__(self)
 
-        if platform.system() == 'Windows':
-            self.use_rawinput = False
-
-        if platform.system() == 'Darwin':
-            self.reset = True
-
         self.color = color
         self.caching = caching
         self.reset = reset
@@ -77,6 +71,12 @@ class MpFileShell(cmd.Cmd):
         self.fe = None
         self.repl = None
         self.tokenizer = Tokenizer()
+
+        if platform.system() == 'Windows':
+            self.use_rawinput = False
+
+        if platform.system() == 'Darwin':
+            self.reset = True
 
         self.__intro()
         self.__set_prompt_path()
