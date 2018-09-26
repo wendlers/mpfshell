@@ -67,6 +67,9 @@ class MpFileShell(cmd.Cmd):
         if platform.system() == 'Windows':
             self.use_rawinput = False
 
+        if platform.system() == 'Darwin':
+            self.reset = True
+
         self.color = color
         self.caching = caching
         self.reset = reset
