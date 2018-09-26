@@ -219,9 +219,10 @@ class MpFileShell(cmd.Cmd):
 
                 if platform.system() == "Windows":
                     args = "ser:" + args
-                    self.open_args = args
                 else:
                     args = "ser:/dev/" + args
+                
+            self.open_args = args
 
             self.__connect(args)
 
