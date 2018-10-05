@@ -219,11 +219,10 @@ class MpFileShell(cmd.Cmd):
 
                 if platform.system() == "Windows":
                     args = "ser:" + args
+                elif '/dev' in arg:
+                    args = "ser:" + args
                 else:
-                    if '/dev' in arg:
-                        args = "ser:" + args
-                    else:
-                        args = "ser:/dev/" + args
+                    args = "ser:/dev/" + args
 
             self.open_args = args
 
