@@ -225,7 +225,7 @@ class MpFileShell(cmd.Cmd):
 
                 if platform.system() == "Windows":
                     args = "ser:" + args
-                elif '/dev' in arg:
+                elif '/dev' in args:
                     args = "ser:" + args
                 else:
                     args = "ser:/dev/" + args
