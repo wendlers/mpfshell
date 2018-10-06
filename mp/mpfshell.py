@@ -33,6 +33,7 @@ import sys
 import serial
 import logging
 import platform
+import time
 
 from mp import version
 from mp.mpfexp import MpFileExplorer
@@ -144,6 +145,11 @@ class MpFileShell(cmd.Cmd):
         except AttributeError as e:
             logging.error(e)
             self.__error("Failed to open: %s" % port)
+
+        if self.__is_open() == False:
+            time.sleep(1.5)
+            self.__connect(None)
+
 
 
     def __reconnect(self):
