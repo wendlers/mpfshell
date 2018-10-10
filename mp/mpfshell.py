@@ -147,7 +147,7 @@ class MpFileShell(cmd.Cmd):
             self.__error("Failed to open: %s" % port)
 
         if self.__is_open() == False:
-            time.sleep(1.5)
+            time.sleep(4)
             self.__connect(None)
 
 
@@ -159,7 +159,7 @@ class MpFileShell(cmd.Cmd):
             if self.__is_open():
                 break
             print(colorama.Fore.GREEN + 'try reconnect... ' + colorama.Fore.RESET)
-            time.sleep(1)
+            time.sleep(2)
 
     def __disconnect(self):
 
