@@ -625,6 +625,32 @@ class MpFileShell(cmd.Cmd):
                 if(self.open_args.startswith("ser:")):
                     self.__reconnect()
 
+    def do_lef(self, args):
+        self.do_lexecfile(args)
+
+    def do_lexecfile(self, args):
+        """execfile(ef) <LOCAL FILE>
+        Execute a Python filename on local.
+        """
+        if self.__is_open():
+
+            s_args = self.__parse_file_names(args)
+            if not s_args:
+                return
+            elif len(s_args) > 1:
+                self.__error("Only one ore one arguments allowed: <LOCAL FILE> ")
+                return
+
+            lfile_name = s_args[0]
+
+            try:
+                self.fe.put(lfile_name, lfile_name)
+
+                self.do_repl('execfile("{0}")\r\n'.format(args))
+
+            except IOError as e:
+                self.__error(str(e))
+
     def do_e(self, args):
         self.do_exec(args)
 
@@ -651,6 +677,8 @@ class MpFileShell(cmd.Cmd):
             except IOError as e:
                 self.__error(str(e))
             except PyboardError as e:
+                self.__error(str(e))
+            except Exception as e:
                 self.__error(str(e))
 
     def do_r(self, args):
@@ -697,8 +725,11 @@ class MpFileShell(cmd.Cmd):
                 print("\n*** Exit REPL with Ctrl+] ***")
 
             try:
+                if args != None:
+                    self.fe.con.write(bytes(args, encoding = "utf8"))
                 self.repl.join(True)
-            except Exception:
+            except Exception as e:
+                # print(e)
                 pass
 
             self.repl.console.cleanup()
