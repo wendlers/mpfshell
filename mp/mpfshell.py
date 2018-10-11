@@ -147,7 +147,7 @@ class MpFileShell(cmd.Cmd):
             self.__error("Failed to open: %s" % port)
 
         if self.__is_open() == False:
-            time.sleep(4)
+            time.sleep(3)
             self.__connect(None)
 
 
@@ -159,7 +159,7 @@ class MpFileShell(cmd.Cmd):
             if self.__is_open():
                 break
             print(colorama.Fore.GREEN + 'try reconnect... ' + colorama.Fore.RESET)
-            time.sleep(2)
+            time.sleep(3)
 
     def __disconnect(self):
 
@@ -609,21 +609,19 @@ class MpFileShell(cmd.Cmd):
         """
         if self.__is_open():
             try:
-                try:
-                    self.fe.keyboard_interrupt()
-                    self.do_exec("execfile('%s')" % args)
-                except KeyboardInterrupt as e:
-                    self.fe.keyboard_interrupt()
-
-                try:
-                    ret = self.fe.follow(2)
-                    if len(ret[-1]):
-                        self.__error(str(ret[-1].decode('utf-8')))
-                except PyboardError:
-                    pass
+                self.do_exec("execfile('%s')" % args)
+                ret = self.fe.follow(2)
+                if len(ret[-1]):
+                    self.__error(str(ret[-1].decode('utf-8')))
+            except KeyboardInterrupt as e:
+                self.fe.keyboard_interrupt()
+            except PyboardError as e:
+                print(e)
             finally:
                 if(self.open_args.startswith("ser:")):
                     self.__reconnect()
+                if(self.__is_open()):
+                    self.fe.enter_raw_repl()
 
     def do_lef(self, args):
         self.do_lexecfile(args)

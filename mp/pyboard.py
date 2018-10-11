@@ -103,7 +103,7 @@ class Pyboard:
         self.con.write(b'\r\x02')  # ctrl-B: enter friendly REPL
 
     def keyboard_interrupt(self):
-        self.con.write(b'\r\x03\x03\x03')  # ctrl-C: KeyboardInterrupt
+        self.con.write(b'\x03\x03')  # ctrl-C: KeyboardInterrupt
 
     def follow(self, timeout, data_consumer=None):
 
