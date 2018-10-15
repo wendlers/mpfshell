@@ -121,19 +121,19 @@ else:
                 ctypes.windll.kernel32.SetConsoleCP(65001)
                 # ANSI handling available through SetConsoleMode since Windows 10 v1511 
                 # https://en.wikipedia.org/wiki/ANSI_escape_code#cite_note-win10th2-1
-                if platform.release() == '10' and int(platform.version().split('.')[2]) > 10586:
-                    ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
-                    import ctypes.wintypes as wintypes
-                    if not hasattr(wintypes, 'LPDWORD'): # PY2
-                        wintypes.LPDWORD = ctypes.POINTER(wintypes.DWORD)
-                    SetConsoleMode = ctypes.windll.kernel32.SetConsoleMode
-                    GetConsoleMode = ctypes.windll.kernel32.GetConsoleMode
-                    GetStdHandle = ctypes.windll.kernel32.GetStdHandle
-                    mode = wintypes.DWORD()
-                    GetConsoleMode(GetStdHandle(-11), ctypes.byref(mode))
-                    if (mode.value & ENABLE_VIRTUAL_TERMINAL_PROCESSING) == 0:
-                        SetConsoleMode(GetStdHandle(-11), mode.value | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-                        self._saved_cm = mode
+                # if platform.release() == '10' and int(platform.version().split('.')[2]) > 10586:
+				ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+				import ctypes.wintypes as wintypes
+				if not hasattr(wintypes, 'LPDWORD'): # PY2
+					wintypes.LPDWORD = ctypes.POINTER(wintypes.DWORD)
+				SetConsoleMode = ctypes.windll.kernel32.SetConsoleMode
+				GetConsoleMode = ctypes.windll.kernel32.GetConsoleMode
+				GetStdHandle = ctypes.windll.kernel32.GetStdHandle
+				mode = wintypes.DWORD()
+				GetConsoleMode(GetStdHandle(-11), ctypes.byref(mode))
+				if (mode.value & ENABLE_VIRTUAL_TERMINAL_PROCESSING) == 0:
+					SetConsoleMode(GetStdHandle(-11), mode.value | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+					self._saved_cm = mode
                 self.output = codecs.getwriter('UTF-8')(Out(sys.stdout.fileno()), 'replace')
                 # the change of the code page is not propagated to Python, manually fix it
                 sys.stderr = codecs.getwriter('UTF-8')(Out(sys.stderr.fileno()), 'replace')
