@@ -92,9 +92,18 @@ class Pyboard:
 
         else:
 
-            self.con.write(b'\r\x01')  # ctrl-A: enter raw REPL
-            data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n')
+            try_count = 0
+            while True:
+                if try_count > 1:
+                    break
 
+                self.con.write(b'\r\x01')  # ctrl-A: enter raw REPL
+                data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n')
+
+                if data.endswith(b'raw REPL; CTRL-B to exit\r\n'):
+                    break
+
+                try_count += 1
             if not data.endswith(b'raw REPL; CTRL-B to exit\r\n'):
                 # print(data)
                 raise PyboardError('could not enter raw repl, please try again.')
