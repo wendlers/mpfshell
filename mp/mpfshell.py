@@ -609,7 +609,7 @@ class MpFileShell(cmd.Cmd):
         """
         if self.__is_open():
             try:
-                self.do_exec("execfile('%s')" % args)
+                self.do_exec("exec(open('%s').read())" % args)
                 ret = self.fe.follow(2)
                 if len(ret[-1]):
                     self.__error(str(ret[-1].decode('utf-8')))
@@ -644,7 +644,7 @@ class MpFileShell(cmd.Cmd):
             try:
                 self.fe.put(lfile_name, lfile_name)
 
-                self.do_repl('execfile("{0}")\r\n'.format(args))
+                self.do_repl("exec(open('{0}').read())\r\n".format(args))
 
             except IOError as e:
                 self.__error(str(e))
