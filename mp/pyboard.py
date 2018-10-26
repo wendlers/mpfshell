@@ -101,7 +101,7 @@ class Pyboard:
                 try_count = try_count - 1
                 self.con.write(b'\r\x01')  # ctrl-A: enter raw REPL
                 data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n')
-                print(data)
+                # print(data)
                 if data.endswith(b'raw REPL; CTRL-B to exit\r\n'):
                     raw_flag = True
                     break
