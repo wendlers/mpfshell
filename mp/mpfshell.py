@@ -128,8 +128,8 @@ class MpFileShell(cmd.Cmd):
             self.__disconnect()
             if(port is None):
                 port = self.open_args
-            if self.reset:
-                print("Hard resetting device ...")
+            # if self.reset:
+            #     print("Hard resetting device ...")
             if self.caching:
                 self.fe = MpFileExplorerCaching(port, self.reset)
             else:
