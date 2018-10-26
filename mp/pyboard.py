@@ -60,7 +60,10 @@ class Pyboard:
 
     def enter_raw_repl(self):
 
-        self.con.write(b'\r\x03\x03\x03\x03')  # ctrl-C twice: interrupt any running program
+        time.sleep(0.05)
+        self.con.write(b'\r\x03\x03')  # ctrl-C twice: interrupt any running program
+        time.sleep(0.05)
+        self.con.write(b'\r\x03\x03')  # ctrl-C twice: interrupt any running program
 
         # flush input (without relying on serial.flushInput())
         n = self.con.inWaiting()
@@ -98,19 +101,21 @@ class Pyboard:
                 try_count = try_count - 1
                 self.con.write(b'\r\x01')  # ctrl-A: enter raw REPL
                 data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n')
+                print(data)
                 if data.endswith(b'raw REPL; CTRL-B to exit\r\n'):
                     raw_flag = True
                     break
 
             if raw_flag is False:
-                # print(data)
                 raise PyboardError('could not enter raw repl, please try again.')
+
+        time.sleep(0.05)
 
     def exit_raw_repl(self):
         self.con.write(b'\r\x02')  # ctrl-B: enter friendly REPL
 
     def keyboard_interrupt(self):
-        self.con.write(b'\x03\x03')  # ctrl-C: KeyboardInterrupt
+        self.con.write(b'\x03\x03\x03\x03')  # ctrl-C: KeyboardInterrupt
 
     def follow(self, timeout, data_consumer=None):
 
@@ -149,7 +154,8 @@ class Pyboard:
 
         # check if we could exec command
         data = self.con.read(2)
-        if data != b'OK':
+        # print(data)
+        if b'OK' not in data:
             raise PyboardError('could not exec command, please try again.')
 
     def exec_raw(self, command, timeout=4, data_consumer=None):
