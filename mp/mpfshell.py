@@ -654,7 +654,7 @@ def main():
     if args.logfile is not None:
         logging.basicConfig(format=format, filename=args.logfile,level=args.loglevel)
     else:
-        logging.basicConfig(format=format, level=logging.CRITICAL)
+        logging.basicConfig(format=format, level=args.loglevel)
 
     logging.info('Micropython File Shell v%s started' % version.FULL)
     logging.info('Running on Python %d.%d using PySerial %s' \
