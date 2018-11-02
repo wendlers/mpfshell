@@ -48,7 +48,7 @@ class MpFileShell(cmd.Cmd):
 
     def view_all_serial(self):
         import serial.tools.list_ports
-        print(colorama.Fore.LIGHTCYAN_EX + "\nlooking for computer port...")
+        print("looking for computer port...")
         plist = list(serial.tools.list_ports.comports())
 
         if len(plist) <= 0:
@@ -58,7 +58,7 @@ class MpFileShell(cmd.Cmd):
                 print("serial name :", serial[0].split('/')[-1])
             print("input ' open", plist[len(plist) - 1][0].split('/')[-1], "' and enter connect your board.")
 
-    def __init__(self, color=False, caching=False, reset=False):
+    def __init__(self, color=False, caching=False, reset=False, help=False):
         if color:
             colorama.init()
             cmd.Cmd.__init__(self, stdout=colorama.initialise.wrapped_stdout)
@@ -82,9 +82,11 @@ class MpFileShell(cmd.Cmd):
         self.__intro()
         self.__set_prompt_path()
 
-        self.do_help(None)
-        print(colorama.Fore.YELLOW + "All support commands, can input help ls or other command if you don't know how to use it(ls).")
-        self.view_all_serial()
+        if help is False:
+            self.do_help(None)
+            print(
+                colorama.Fore.YELLOW + "All support commands, can input help ls or other command if you don't know how to use it(ls).")
+            self.view_all_serial()
 
     def __del__(self):
         self.__disconnect()
@@ -99,7 +101,7 @@ class MpFileShell(cmd.Cmd):
             self.intro = '\n** Micropython File Shell v%s, sw@kaltpost.de & juwan@banana-pi.com **\n' % version.FULL
 
         self.intro += '-- Running on Python %d.%d using PySerial %s --\n' \
-                       % (sys.version_info[0], sys.version_info[1], serial.VERSION)
+                      % (sys.version_info[0], sys.version_info[1], serial.VERSION)
 
     def __set_prompt_path(self):
 
@@ -126,7 +128,7 @@ class MpFileShell(cmd.Cmd):
 
         try:
             self.__disconnect()
-            if(port is None):
+            if (port is None):
                 port = self.open_args
             # if self.reset:
             #     print("Hard resetting device ...")
@@ -149,8 +151,6 @@ class MpFileShell(cmd.Cmd):
         if self.__is_open() == False:
             time.sleep(3)
             self.__connect(None)
-
-
 
     def __reconnect(self):
         import time
@@ -579,7 +579,7 @@ class MpFileShell(cmd.Cmd):
         """runfile(rf) <LOCAL FILE>
         download and running local file in board.
         """
-        
+
         if not len(args):
             self.__error("Missing arguments: <LOCAL FILE>")
 
@@ -618,9 +618,9 @@ class MpFileShell(cmd.Cmd):
             except PyboardError as e:
                 print(e)
             finally:
-                if(self.open_args.startswith("ser:")):
+                if (self.open_args.startswith("ser:")):
                     self.__reconnect()
-                if(self.__is_open()):
+                if (self.__is_open()):
                     self.fe.enter_raw_repl()
 
     def do_lef(self, args):
@@ -666,9 +666,9 @@ class MpFileShell(cmd.Cmd):
         elif self.__is_open():
 
             try:
-                self.fe.exec_raw_no_follow("print('Enter remote execution and stop using Ctrl+C.')\n"+ args + "\n")
+                self.fe.exec_raw_no_follow("print('Enter remote execution and stop using Ctrl+C.')\n" + args + "\n")
                 ret = self.fe.follow(None, data_consumer)
-                
+
                 if len(ret[-1]):
                     self.__error(str(ret[-1].decode('utf-8')))
 
@@ -724,7 +724,7 @@ class MpFileShell(cmd.Cmd):
 
             try:
                 if args != None:
-                    self.fe.con.write(bytes(args, encoding = "utf8"))
+                    self.fe.con.write(bytes(args, encoding="utf8"))
                 self.repl.join(True)
             except Exception as e:
                 # print(e)
@@ -763,7 +763,6 @@ class MpFileShell(cmd.Cmd):
 
 
 def main():
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--command", help="execute given commands (separated by ;)", default=None, nargs="*")
     parser.add_argument("-s", "--script", help="execute commands from file", default=None)
@@ -772,32 +771,32 @@ def main():
 
     parser.add_argument("--nocolor", help="disable color", action="store_true", default=False)
     parser.add_argument("--nocache", help="disable cache", action="store_true", default=False)
+    parser.add_argument("--nohelp", help="disable help", action="store_true", default=False)
 
     parser.add_argument("--logfile", help="write log to file", default=None)
     parser.add_argument("--loglevel", help="loglevel (CRITICAL, ERROR, WARNING, INFO, DEBUG)", default="INFO")
 
     parser.add_argument("--reset", help="hard reset device via DTR (serial connection only)", action="store_true",
                         default=False)
-    
+
     parser.add_argument("-o", "--open", help="directly opens board", metavar="BOARD", action="store", default=None)
     parser.add_argument("board", help="directly opens board", nargs="?", action="store", default=None)
-    
 
     args = parser.parse_args()
 
     format = '%(asctime)s\t%(levelname)s\t%(message)s'
 
     if args.logfile is not None:
-        logging.basicConfig(format=format, filename=args.logfile,level=args.loglevel)
+        logging.basicConfig(format=format, filename=args.logfile, level=args.loglevel)
     else:
         logging.basicConfig(format=format, level=logging.CRITICAL)
 
     logging.info('Micropython File Shell v%s started' % version.FULL)
     logging.info('Running on Python %d.%d using PySerial %s' \
-              % (sys.version_info[0], sys.version_info[1], serial.VERSION))
+                 % (sys.version_info[0], sys.version_info[1], serial.VERSION))
 
-    mpfs = MpFileShell(not args.nocolor, not args.nocache, args.reset)
-    
+    mpfs = MpFileShell(not args.nocolor, not args.nocache, args.reset, args.nohelp)
+
     if args.open is not None:
         if args.board is None:
             mpfs.do_open(args.open)
@@ -805,7 +804,6 @@ def main():
             print("Positional argument ({}) takes precedence over --open.".format(args.board))
     if args.board is not None:
         mpfs.do_open(args.board)
-    
 
     if args.command is not None:
 
@@ -843,5 +841,4 @@ def main():
 
 
 if __name__ == '__main__':
-
     main()

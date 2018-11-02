@@ -61,10 +61,15 @@ class Pyboard:
 
     def enter_raw_repl(self):
 
+        # waiting any board boot start and enter micropython
         time.sleep(0.05)
-        self.con.write(b'\r\x03\x03')  # ctrl-C twice: interrupt any running program
+        self.con.write(b'\x03')
         time.sleep(0.05)
-        self.con.write(b'\r\x03\x03')  # ctrl-C twice: interrupt any running program
+        self.con.write(b'\x02')
+        data = self.read_until(1, b'Type "help()" for more information.\r\n', max_recv=2000)
+        if not data.endswith(b'Type "help()" for more information.\r\n'):
+            # print(data)
+            raise PyboardError('could not enter raw repl, auto try again.(1)')
 
         # flush input (without relying on serial.flushInput())
         n = self.con.inWaiting()
@@ -75,24 +80,24 @@ class Pyboard:
         if self.con.survives_soft_reset():
 
             self.con.write(b'\r\x01')  # ctrl-A: enter raw REPL
-            data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n>', max_recv=1000)
+            data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n>', max_recv=2000)
 
             if not data.endswith(b'raw REPL; CTRL-B to exit\r\n>'):
                 # print(data)
-                raise PyboardError('could not enter raw repl, auto try again.')
+                raise PyboardError('could not enter raw repl, auto try again.(2)')
 
             self.con.write(b'\x04')  # ctrl-D: soft reset
-            data = self.read_until(1, b'soft reboot\r\n', max_recv=1000)
+            data = self.read_until(1, b'soft reboot\r\n', max_recv=2000)
             if not data.endswith(b'soft reboot\r\n'):
                 # print(data)
-                raise PyboardError('could not enter raw repl, auto try again.')
+                raise PyboardError('could not enter raw repl, auto try again.(3)')
 
             # By splitting this into 2 reads, it allows boot.py to print stuff,
             # which will show up after the soft reboot and before the raw REPL.
-            data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n', max_recv=1000)
+            data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n', max_recv=2000)
             if not data.endswith(b'raw REPL; CTRL-B to exit\r\n'):
                 # print(data)
-                raise PyboardError('could not enter raw repl, auto try again.')
+                raise PyboardError('could not enter raw repl, auto try again.(4)')
 
         else:
 
@@ -101,14 +106,13 @@ class Pyboard:
             while try_count > 0:
                 try_count = try_count - 1
                 self.con.write(b'\r\x01')  # ctrl-A: enter raw REPL
-                data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n', max_recv=1000)
-                # print(data)
+                data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n', max_recv=2000)
                 if data.endswith(b'raw REPL; CTRL-B to exit\r\n'):
                     raw_flag = True
                     break
 
             if raw_flag is False:
-                raise PyboardError('could not enter raw repl, auto try again.')
+                raise PyboardError('could not enter raw repl, auto try again.(2)')
 
         time.sleep(0.05)
 
@@ -122,13 +126,15 @@ class Pyboard:
 
         # wait for normal output
         data = self.read_until(1, b'\x04', timeout=timeout, data_consumer=data_consumer)
-        if not data.endswith(b'\x04'):
+        # print(data)
+        if not data.endswith(b'\x04') and not data.endswith(b'>'):
             raise PyboardError('timeout waiting for first EOF reception')
         data = data[:-1]
 
         # wait for error output
         data_err = self.read_until(1, b'\x04', timeout=timeout)
-        if not data_err.endswith(b'\x04'):
+        # print(data_err)
+        if not data_err.endswith(b'\x04') and not data.endswith(b'>'):
             raise PyboardError('timeout waiting for second EOF reception')
         data_err = data_err[:-1]
 
@@ -144,6 +150,7 @@ class Pyboard:
 
         # check we have a prompt
         data = self.read_until(1, b'>')
+
         if not data.endswith(b'>'):
             raise PyboardError('could not enter raw repl, auto try again.')
 
