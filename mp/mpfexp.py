@@ -151,7 +151,7 @@ class MpFileExplorer(Pyboard):
         return os.path.join(self.dir, name)
 
     def __set_sysname(self):
-        self.sysname = self.eval("os.uname()[0]").decode('utf-8')
+        self.sysname = self.eval("uos.uname()[0]").decode('utf-8')
 
     def close(self):
 
