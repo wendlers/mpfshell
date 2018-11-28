@@ -610,11 +610,12 @@ class MpFileShell(cmd.Cmd):
         if self.__is_open():
             try:
                 self.do_exec("exec(open('%s').read())" % args)
-                ret = self.fe.follow(2)
-                if len(ret[-1]):
-                    self.__error(str(ret[-1].decode('utf-8')))
+                # ret = self.fe.follow(2)
+                # if len(ret[-1]):
+                #     self.__error(str(ret[-1].decode('utf-8')))
             except KeyboardInterrupt as e:
                 self.fe.keyboard_interrupt()
+                print(e)
             except PyboardError as e:
                 print(e)
             finally:
@@ -671,7 +672,7 @@ class MpFileShell(cmd.Cmd):
 
                 if len(ret[-1]):
                     self.__error(str(ret[-1].decode('utf-8')))
-
+                    
             except IOError as e:
                 self.__error(str(e))
             except PyboardError as e:
