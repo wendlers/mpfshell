@@ -345,6 +345,8 @@ class MpFileExplorer(Pyboard):
                 "  sys.stdout.write(c)\r\n" % self.BIN_CHUNK_SIZE
             )
 
+            self.exec_("f.close()")
+
         except PyboardError as e:
             if _was_file_not_existing(e):
                 raise RemoteIOError("Failed to read file: %s" % src)
@@ -384,6 +386,8 @@ class MpFileExplorer(Pyboard):
                 "    break\r\n"
                 "  sys.stdout.write(c)\r\n" % self.BIN_CHUNK_SIZE
             )
+
+            self.exec_("f.close()")
 
         except PyboardError as e:
             if _was_file_not_existing(e):
