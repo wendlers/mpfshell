@@ -28,21 +28,20 @@ class ConError(Exception):
 
 
 class ConBase:
-
     def __init__(self):
         pass
 
     def close(self):
-        raise NotImplemented()
+        raise NotImplementedError
 
     def read(self, size):
-        raise NotImplemented()
+        raise NotImplementedError
 
     def write(self, data):
-        raise NotImplemented()
+        raise NotImplementedError
 
     def inWaiting(self):
-        raise NotImplemented()
+        raise NotImplementedError
 
     @property
     def in_waiting(self):

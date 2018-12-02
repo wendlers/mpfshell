@@ -22,10 +22,10 @@
 # THE SOFTWARE.
 ##
 
-import pytest
-import subprocess
-import time
+# enable logging of modules under test
+import logging
 
+import pytest
 from mp.mpfexp import MpFileExplorer, MpFileExplorerCaching
 
 _mpfexp_inst = None
@@ -38,14 +38,23 @@ def pytest_addoption(parser):
     :param parser:      Parser object
     """
 
-    parser.addoption("--testcon", action="store", default="ser:/dev/ttyUSB0",
-                     help="Connection string to use for tests")
+    parser.addoption(
+        "--testcon",
+        action="store",
+        default="ser:/dev/ttyUSB0",
+        help="Connection string to use for tests",
+    )
 
-    parser.addoption("--caching", action="store_true", default=False,
-                     help="Enable caching of MpFileExplorer")
+    parser.addoption(
+        "--caching",
+        action="store_true",
+        default=False,
+        help="Enable caching of MpFileExplorer",
+    )
 
-    parser.addoption("--nosetup", action="store_true", default=False,
-                     help="Skip initial board setup")
+    parser.addoption(
+        "--nosetup", action="store_true", default=False, help="Skip initial board setup"
+    )
 
 
 @pytest.fixture(scope="module")
@@ -59,7 +68,9 @@ def mpsetup(request):
     if not request.config.getoption("--nosetup"):
 
         fe = MpFileExplorer(request.config.getoption("--testcon"))
-        fe.puts("pytest.py", """
+        fe.puts(
+            "pytest.py",
+            """
 def rm(path):
     import os
     files = os.listdir(path)
@@ -72,7 +83,8 @@ def rm(path):
                     os.rmdir(path + '/' +  f)
                 except:
                     rm(path + '/' + f)
-""")
+""",
+        )
 
         fe.exec_("import pytest")
         fe.exec_("pytest.rm(os.getcwd())")
@@ -101,7 +113,9 @@ def mpfexp(request):
 
     return _mpfexp_inst
 
-# enable logging of modules under test
-import logging
-logging.basicConfig(format='%(asctime)s\t%(levelname)s\t%(message)s',
-                    filename='test.log', level=logging.DEBUG)
+
+logging.basicConfig(
+    format="%(asctime)s\t%(levelname)s\t%(message)s",
+    filename="test.log",
+    level=logging.DEBUG,
+)
