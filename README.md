@@ -135,6 +135,10 @@ If you like to use a different filename on the device, you could use this:
 
     mpfs> put boot.py main.py
 
+To compile before uploading and upload the compiled file (you need mpy-cross in your path):
+
+    mpfs > putc boot.py
+
 Or to upload all files that match a regular expression from the
 current local directory to the current remote directory:
 

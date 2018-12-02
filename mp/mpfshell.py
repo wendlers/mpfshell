@@ -23,6 +23,7 @@
 ##
 
 
+import tempfile
 import argparse
 import cmd
 import glob
@@ -659,6 +660,43 @@ class MpFileShell(cmd.Cmd):
             if (os.path.isfile(os.path.join(".", o)) and o.endswith(".py"))
         ]
         return [i for i in files if i.startswith(args[0])]
+
+    def do_putc(self, args):
+        """mputc <LOCAL PYTHON FILE> [<REMOTE FILE>]
+        Compile a Python file into byte-code by using mpy-cross (which needs to be in the
+        path) and upload it. The compiled file has the same name as the original file but
+        with extension '.mpy' by default.
+        """
+        if not len(args):
+            self.__error("Missing arguments: <LOCAL FILE> [<REMOTE FILE>]")
+
+        elif self.__is_open():
+            s_args = self.__parse_file_names(args)
+            if not s_args:
+                return
+            elif len(s_args) > 2:
+                self.__error(
+                    "Only one ore two arguments allowed: <LOCAL FILE> [<REMOTE FILE>]"
+                )
+                return
+
+            lfile_name = s_args[0]
+
+            if len(s_args) > 1:
+                rfile_name = s_args[1]
+            else:
+                rfile_name = (lfile_name[:lfile_name.rfind(".")] if "." in lfile_name else lfile_name) + ".mpy"
+
+            _, tmp = tempfile.mkstemp()
+
+            try:
+                self.fe.mpy_cross(src=lfile_name, dst=tmp)
+                self.fe.put(tmp, rfile_name)
+            except IOError as e:
+                self.__error(str(e))
+
+            os.unlink(tmp)
+    complete_putc = complete_mpyc
 
 
 def main():
