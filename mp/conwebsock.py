@@ -55,9 +55,9 @@ class ConWebsock(ConBase, threading.Thread):
 
         self.timeout = 5.0
 
-        if b"Password:" in self.read(256, blocking=False):
+        if b"Password:" in self.read(10, blocking=False):
             self.ws.send(password + "\r")
-            if b"WebREPL connected" not in self.read(256, blocking=False):
+            if b"WebREPL connected" not in self.read(25, blocking=False):
                 raise ConError()
         else:
             raise ConError()
