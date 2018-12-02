@@ -113,11 +113,11 @@ via serial line:
 
     mpfs> open ttyUSB0
 
-Or connect via websocket (ESP8266 only):
+Or connect via websocket (ESP8266 only) with the password "python":
 
     mpfs> open ws:192.168.1.1,python
 
-Or connect vial telnet (WiPy only):
+Or connect vial telnet (WiPy only) with username "micro" and password "python":
 
     mpfs> open tn:192.168.1.1,micro,python
 
