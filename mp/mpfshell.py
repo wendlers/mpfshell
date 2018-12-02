@@ -628,6 +628,10 @@ class MpFileShell(cmd.Cmd):
 
             self.repl.console.cleanup()
 
+            if self.caching:
+                # Clear the file explorer cache so we can see any new files.
+                self.fe.cache = {}
+
             self.fe.setup()
             print("")
 
