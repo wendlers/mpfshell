@@ -151,7 +151,7 @@ class MpFileExplorer(Pyboard):
         return os.path.join(self.dir, name)
 
     def __set_sysname(self):
-        self.sysname = self.eval("os.uname()[0]").decode('utf-8')
+        self.sysname = self.eval("uos.uname()[0]").decode('utf-8')
 
     def close(self):
 
@@ -166,13 +166,13 @@ class MpFileExplorer(Pyboard):
     def setup(self):
 
         self.enter_raw_repl()
-        self.exec_("import os, sys")
+        self.exec_("import uos, sys")
         self.exec_("try:\n    import ubinascii\nexcept ImportError:\n    import binascii as ubinascii")
 
         # New version mounts files on /flash so lets set dir based on where we are in
         # filesystem.
         # Using the "path.join" to make sure we get "/" if "os.getcwd" returns "".
-        self.dir = os.path.join("/", self.eval("os.getcwd()").decode('utf8'))
+        self.dir = os.path.join("/", self.eval("uos.getcwd()").decode('utf8'))
 
         self.__set_sysname()
 
@@ -183,7 +183,7 @@ class MpFileExplorer(Pyboard):
 
         try:
 
-            res = self.eval("os.listdir('%s')" % self.dir)
+            res = self.eval("uos.listdir('%s')" % self.dir)
             tmp = ast.literal_eval(res.decode('utf-8'))
 
             if add_dirs:
@@ -191,7 +191,7 @@ class MpFileExplorer(Pyboard):
                     try:
 
                         # if it is a dir, it could be listed with "os.listdir"
-                        self.eval("os.listdir('%s/%s')" % (self.dir.rstrip('/'), f))
+                        self.eval("uos.listdir('%s/%s')" % (self.dir.rstrip('/'), f))
                         if add_details:
                             files.append((f, 'D'))
                         else:
@@ -216,7 +216,7 @@ class MpFileExplorer(Pyboard):
                     try:
 
                         # if it is a file, "os.listdir" must fail
-                        self.eval("os.listdir('%s/%s')" % (self.dir.rstrip('/'), f))
+                        self.eval("uos.listdir('%s/%s')" % (self.dir.rstrip('/'), f))
 
                     except PyboardError as e:
 
@@ -241,11 +241,11 @@ class MpFileExplorer(Pyboard):
 
         try:
             # 1st try to delete it as a file
-            self.eval("os.remove('%s')" % (self._fqn(target)))
+            self.eval("uos.remove('%s')" % (self._fqn(target)))
         except PyboardError as e:
             try:
                 # 2nd see if it is empty dir
-                self.eval("os.rmdir('%s')" % (self._fqn(target)))
+                self.eval("uos.rmdir('%s')" % (self._fqn(target)))
             except PyboardError as e:
                 # 3rd report error if nor successful
                 if _was_file_not_existing(e):
@@ -442,7 +442,7 @@ class MpFileExplorer(Pyboard):
         # see if the new dir exists
         try:
 
-            self.eval("os.listdir('%s')" % tmp_dir)
+            self.eval("uos.listdir('%s')" % tmp_dir)
             self.dir = tmp_dir
 
         except PyboardError as e:
@@ -459,7 +459,7 @@ class MpFileExplorer(Pyboard):
 
         try:
 
-            self.eval("os.mkdir('%s')" % self._fqn(target))
+            self.eval("uos.mkdir('%s')" % self._fqn(target))
 
         except PyboardError as e:
             if _was_file_not_existing(e):
