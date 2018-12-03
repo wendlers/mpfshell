@@ -183,59 +183,35 @@ class MpFileExplorer(Pyboard):
         files = []
 
         try:
-
-            res = self.eval("uos.listdir('%s')" % self.dir)
-            tmp = ast.literal_eval(res.decode("utf-8"))
-
-            if add_dirs:
-                for f in tmp:
-                    try:
-
-                        # if it is a dir, it could be listed with "os.listdir"
-                        self.eval("uos.listdir('%s/%s')" % (self.dir.rstrip("/"), f))
-                        if add_details:
-                            files.append((f, "D"))
-                        else:
-                            files.append(f)
-
-                    except PyboardError as e:
-
-                        if _was_file_not_existing(e):
-                            # this was not a dir
-                            if self.sysname == "WiPy" and self.dir == "/":
-                                # for the WiPy, assume that all entries in the root of th FS
-                                # are mount-points, and thus treat them as directories
-                                if add_details:
-                                    files.append((f, "D"))
-                                else:
-                                    files.append(f)
-                        else:
-                            raise e
-
-            if add_files and not (self.sysname == "WiPy" and self.dir == "/"):
-                for f in tmp:
-                    try:
-
-                        # if it is a file, "os.listdir" must fail
-                        self.eval("uos.listdir('%s/%s')" % (self.dir.rstrip("/"), f))
-
-                    except PyboardError as e:
-
-                        if _was_file_not_existing(e):
-                            if add_details:
-                                files.append((f, "F"))
-                            else:
-                                files.append(f)
-                        else:
-                            raise e
-
+            res = self.eval("list(uos.ilistdir('%s'))" % self.dir)
         except Exception as e:
             if _was_file_not_existing(e):
                 raise RemoteIOError("No such directory: %s" % self.dir)
             else:
                 raise PyboardError(e)
 
-        return files
+        entries = ast.literal_eval(res.decode("utf-8"))
+
+        if self.sysname == "WiPy" and self.dir == "/":
+            # Assume everything in the root is a mountpoint and return them as dirs.
+            if add_details:
+                return [(entry[0], "D") for entry in entries]
+            else:
+                return [entry[0] for entry in entries]
+
+        for entry in entries:
+            fname, ftype, inode = entry[:3]
+            fchar = "D" if ftype == 0x4000 else "F"
+            if not ((fchar == "D" and add_dirs) or (fchar == "F" and add_files)):
+                continue
+
+            files.append((fname, fchar) if add_details else fname)
+
+        if add_details:
+            # Sort directories first, then filenames.
+            return sorted(files, key=lambda x: (x[1], x[0]))
+        else:
+            return sorted(files)
 
     @retry(PyboardError, tries=MAX_TRIES, delay=1, backoff=2, logger=logging.root)
     def rm(self, target):
@@ -511,33 +487,14 @@ class MpFileExplorerCaching(MpFileExplorer):
 
         hit = self.__cache_hit(self.dir)
 
-        if hit is not None:
+        if hit is None:
+            hit = MpFileExplorer.ls(self, True, True, True)
+            self.__cache(self.dir, hit)
 
-            files = []
-
-            if add_dirs:
-                for f in hit:
-                    if f[1] == "D":
-                        if add_details:
-                            files.append(f)
-                        else:
-                            files.append(f[0])
-
-            if add_files:
-                for f in hit:
-                    if f[1] == "F":
-                        if add_details:
-                            files.append(f)
-                        else:
-                            files.append(f[0])
-
-            return files
-
-        files = MpFileExplorer.ls(self, add_files, add_dirs, add_details)
-
-        if add_files and add_dirs and add_details:
-            self.__cache(self.dir, files)
-
+        files = [f for f in hit if ((add_files and f[1] == "F") or (add_dirs and f[1] == "D"))]
+        files.sort(key=lambda x: (x[1], x[0]))
+        if not add_details:
+            files = [f[0] for f in files]
         return files
 
     def put(self, src, dst=None):
