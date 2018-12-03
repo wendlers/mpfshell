@@ -482,7 +482,7 @@ class MpFileExplorer(Pyboard):
         if dst is None:
             return_code = subprocess.call("mpy-cross %s" % (src), shell=True)
         else:
-            return_code = subprocess.call("mpy-cross -o %s %s" % (src, dst), shell=True)
+            return_code = subprocess.call("mpy-cross -o %s %s" % (dst, src), shell=True)
 
         if return_code != 0:
             raise IOError("Filed to compile: %s" % src)
