@@ -2,6 +2,8 @@
 
 [![](https://www.codeshelter.co/static/badges/badge-plastic.9800c3f706ba.svg)](https://www.codeshelter.co/)
 
+[![PyPI version](https://badge.fury.io/py/mpfshell.svg)](https://badge.fury.io/py/mpfshell)
+
 2016-06-21, sw@kaltpost.de
 
 A simple shell based file explorer for ESP8266 and WiPy
