@@ -22,15 +22,14 @@
 # THE SOFTWARE.
 ##
 
-import time
 import logging
+import time
 
-from serial import Serial
 from mp.conbase import ConBase, ConError
+from serial import Serial
 
 
 class ConSerial(ConBase):
-
     def __init__(self, port, baudrate=115200, reset=False):
         ConBase.__init__(self)
 
@@ -74,4 +73,3 @@ class ConSerial(ConBase):
 
     def survives_soft_reset(self):
         return False
-
