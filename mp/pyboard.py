@@ -58,6 +58,7 @@ class Pyboard:
 
     def enter_raw_repl(self):
 
+        time.sleep(0.5)   # allow some time for board to reset
         self.con.write(b"\r\x03\x03")  # ctrl-C twice: interrupt any running program
 
         # flush input (without relying on serial.flushInput())
