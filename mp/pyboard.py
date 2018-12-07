@@ -36,13 +36,14 @@ class Pyboard:
         if self.con is not None:
             self.con.close()
 
-    def read_until(self, min_num_bytes, ending, timeout=10, data_consumer=None):
+    def read_until(self, min_num_bytes, ending, timeout=2, data_consumer=None, max_recv=sys.maxsize):
 
         data = self.con.read(min_num_bytes)
         if data_consumer:
             data_consumer(data)
         timeout_count = 0
-        while True:
+        while len(data) < max_recv:
+            # print(len(data)) # if main.py exist "while True:\r\nprint(1)\r\n lead to recv data error"
             if data.endswith(ending):
                 break
             elif self.con.inWaiting() > 0:
@@ -60,7 +61,15 @@ class Pyboard:
 
     def enter_raw_repl(self):
 
-        self.con.write(b'\r\x03\x03')  # ctrl-C twice: interrupt any running program
+        # waiting any board boot start and enter micropython
+        time.sleep(0.05)
+        self.con.write(b'\x03')
+        time.sleep(0.05)
+        self.con.write(b'\x02')
+        data = self.read_until(1, b'Type "help()" for more information.\r\n', max_recv=2000)
+        if not data.endswith(b'Type "help()" for more information.\r\n'):
+            # print(data)
+            raise PyboardError('could not enter raw repl, auto try again.(1)')
 
         # flush input (without relying on serial.flushInput())
         n = self.con.inWaiting()
@@ -71,48 +80,61 @@ class Pyboard:
         if self.con.survives_soft_reset():
 
             self.con.write(b'\r\x01')  # ctrl-A: enter raw REPL
-            data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n>')
+            data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n>', max_recv=2000)
 
             if not data.endswith(b'raw REPL; CTRL-B to exit\r\n>'):
-                print(data)
-                raise PyboardError('could not enter raw repl')
+                # print(data)
+                raise PyboardError('could not enter raw repl, auto try again.(2)')
 
             self.con.write(b'\x04')  # ctrl-D: soft reset
-            data = self.read_until(1, b'soft reboot\r\n')
+            data = self.read_until(1, b'soft reboot\r\n', max_recv=2000)
             if not data.endswith(b'soft reboot\r\n'):
-                print(data)
-                raise PyboardError('could not enter raw repl')
+                # print(data)
+                raise PyboardError('could not enter raw repl, auto try again.(3)')
 
             # By splitting this into 2 reads, it allows boot.py to print stuff,
             # which will show up after the soft reboot and before the raw REPL.
-            data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n')
+            data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n', max_recv=2000)
             if not data.endswith(b'raw REPL; CTRL-B to exit\r\n'):
-                print(data)
-                raise PyboardError('could not enter raw repl')
+                # print(data)
+                raise PyboardError('could not enter raw repl, auto try again.(4)')
 
         else:
 
-            self.con.write(b'\r\x01')  # ctrl-A: enter raw REPL
-            data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n')
+            try_count = 2
+            raw_flag = False
+            while try_count > 0:
+                try_count = try_count - 1
+                self.con.write(b'\r\x01')  # ctrl-A: enter raw REPL
+                data = self.read_until(1, b'raw REPL; CTRL-B to exit\r\n', max_recv=2000)
+                if data.endswith(b'raw REPL; CTRL-B to exit\r\n'):
+                    raw_flag = True
+                    break
 
-            if not data.endswith(b'raw REPL; CTRL-B to exit\r\n'):
-                print(data)
-                raise PyboardError('could not enter raw repl')
+            if raw_flag is False:
+                raise PyboardError('could not enter raw repl, auto try again.(2)')
+
+        time.sleep(0.05)
 
     def exit_raw_repl(self):
         self.con.write(b'\r\x02')  # ctrl-B: enter friendly REPL
+
+    def keyboard_interrupt(self):
+        self.con.write(b'\x03\x03\x03\x03')  # ctrl-C: KeyboardInterrupt
 
     def follow(self, timeout, data_consumer=None):
 
         # wait for normal output
         data = self.read_until(1, b'\x04', timeout=timeout, data_consumer=data_consumer)
-        if not data.endswith(b'\x04'):
+        # print(data)
+        if not data.endswith(b'\x04') and not data.endswith(b'>'):
             raise PyboardError('timeout waiting for first EOF reception')
         data = data[:-1]
 
         # wait for error output
         data_err = self.read_until(1, b'\x04', timeout=timeout)
-        if not data_err.endswith(b'\x04'):
+        # print(data_err)
+        if not data_err.endswith(b'\x04') and not data.endswith(b'>'):
             raise PyboardError('timeout waiting for second EOF reception')
         data_err = data_err[:-1]
 
@@ -128,8 +150,9 @@ class Pyboard:
 
         # check we have a prompt
         data = self.read_until(1, b'>')
+
         if not data.endswith(b'>'):
-            raise PyboardError('could not enter raw repl')
+            raise PyboardError('could not enter raw repl, auto try again.')
 
         # write command
         for i in range(0, len(command_bytes), 256):
@@ -139,11 +162,12 @@ class Pyboard:
 
         # check if we could exec command
         data = self.con.read(2)
-        if data != b'OK':
-            raise PyboardError('could not exec command')
+        # print(data)
+        if b'OK' not in data:
+            raise PyboardError('could not exec command, auto try again.')
 
-    def exec_raw(self, command, timeout=10, data_consumer=None):
-        self.exec_raw_no_follow(command);
+    def exec_raw(self, command, timeout=4, data_consumer=None):
+        self.exec_raw_no_follow(command)
         return self.follow(timeout, data_consumer)
 
     def eval(self, expression):
