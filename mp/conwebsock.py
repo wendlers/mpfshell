@@ -27,6 +27,7 @@ import websocket
 import threading
 import time
 import logging
+import colorama
 
 from collections import deque
 from mp.conbase import ConBase, ConError
@@ -54,11 +55,13 @@ class ConWebsock(ConBase, threading.Thread):
 
         self.timeout = 5.0
 
-        if b'Password:' in self.read(256, blocking=False):
+        if b'Password:' in self.read(10, blocking=False):
             self.ws.send(password + "\r")
-            if not b'WebREPL connected' in self.read(256, blocking=False):
+            if not b'WebREPL connected' in self.read(25, blocking=False):
+                print('\n' + colorama.Fore.RED + "WebREPL Password Error" + colorama.Fore.RESET + '\n')
                 raise ConError()
         else:
+            print('\n' + colorama.Fore.RED + "WebREPL Remote IP does not respond, check belong to the same network." + colorama.Fore.RESET + '\n')
             raise ConError()
 
         self.timeout = 1.0
