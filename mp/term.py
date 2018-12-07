@@ -28,19 +28,21 @@ import serial
 if serial.VERSION.startswith("2."):
 
     # see if we could use the legacy Miniterm implementation
-    from serial.tools.miniterm import Miniterm, console, CONVERT_CRLF, CONVERT_CR, CONVERT_LF, NEWLINE_CONVERISON_MAP
+    from serial.tools.miniterm import (
+        Miniterm,
+        console,
+        CONVERT_CRLF,
+        CONVERT_CR,
+        CONVERT_LF,
+        NEWLINE_CONVERISON_MAP,
+    )
 
     class Term(Miniterm):
-
-        def __init__(self, serial_instance, echo=False, eol='crlf'):
+        def __init__(self, serial_instance, echo=False, eol="crlf"):
 
             self.serial = serial_instance
 
-            convert = {
-                "cr": CONVERT_CR,
-                "lf": CONVERT_LF,
-                "crlf": CONVERT_CRLF
-            }
+            convert = {"cr": CONVERT_CR, "lf": CONVERT_LF, "crlf": CONVERT_CRLF}
 
             self.console = console
             self.echo = echo
@@ -63,8 +65,10 @@ if serial.VERSION.startswith("2."):
         def set_tx_encoding(self, enc):
             pass
 
+
 else:
 
     # see if we could use the new Miniterm implementation
     from serial.tools.miniterm import Miniterm
+
     Term = Miniterm

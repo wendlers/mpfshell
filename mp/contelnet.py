@@ -24,15 +24,14 @@
 
 
 import sys
-import time
 import telnetlib
-
+import time
 from collections import deque
+
 from mp.conbase import ConBase, ConError
 
 
 class ConTelnet(ConBase):
-
     def __init__(self, ip, user, password):
         ConBase.__init__(self)
 
@@ -43,20 +42,22 @@ class ConTelnet(ConBase):
 
         self.tn = telnetlib.Telnet(ip)
 
-        if user == '':
+        if user == "":
             self.fifo = deque()
             return
 
-        if b'Login as:' in self.tn.read_until(b'Login as:', timeout=5.0):
-            self.tn.write(bytes(user.encode('ascii')) + b"\r\n")
+        if b"Login as:" in self.tn.read_until(b"Login as:", timeout=5.0):
+            self.tn.write(bytes(user.encode("ascii")) + b"\r\n")
 
-            if b'Password:' in self.tn.read_until(b'Password:', timeout=5.0):
+            if b"Password:" in self.tn.read_until(b"Password:", timeout=5.0):
 
                 # needed because of internal implementation details of the telnet server
                 time.sleep(0.2)
-                self.tn.write(bytes(password.encode('ascii')) + b"\r\n")
+                self.tn.write(bytes(password.encode("ascii")) + b"\r\n")
 
-                if b'for more information.' in self.tn.read_until(b'Type "help()" for more information.', timeout=5.0):
+                if b"for more information." in self.tn.read_until(
+                    b'Type "help()" for more information.', timeout=5.0
+                ):
                     self.fifo = deque()
                     return
 
@@ -89,7 +90,7 @@ class ConTelnet(ConBase):
 
         self.__fill_fifo(size)
 
-        data = b''
+        data = b""
         while len(data) < size and len(self.fifo) > 0:
             data += self.fifo.popleft()
 
@@ -99,7 +100,7 @@ class ConTelnet(ConBase):
 
         self.__fill_fifo(size)
 
-        data = b''
+        data = b""
         while len(data) < size and len(self.fifo) > 0:
             data += bytes([self.fifo.popleft()])
 

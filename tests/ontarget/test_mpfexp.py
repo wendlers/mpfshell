@@ -24,8 +24,8 @@
 
 
 import os
-import pytest
 
+import pytest
 from mp.mpfshell import RemoteIOError
 
 
@@ -35,7 +35,7 @@ class TestMpfexp:
     Tests for the MpFileExplorer class.
     """
 
-    def __create_local_file(self, file, data =b""):
+    def __create_local_file(self, file, data=b""):
 
         with open(file, "wb") as f:
             f.write(data)
@@ -44,60 +44,60 @@ class TestMpfexp:
 
         assert "/" == mpfexp.pwd()
 
-        mpfexp.md('dir1')
-        mpfexp.md('dir 1')
-        mpfexp.md('dir1/subdir1')
+        mpfexp.md("dir1")
+        mpfexp.md("dir 1")
+        mpfexp.md("dir1/subdir1")
 
         # no duplicate directory names
         with pytest.raises(RemoteIOError):
-            mpfexp.md('dir1')
+            mpfexp.md("dir1")
 
         with pytest.raises(RemoteIOError):
-            mpfexp.md('dir1/subdir1')
+            mpfexp.md("dir1/subdir1")
 
         # no subdir in non existing dir
         with pytest.raises(RemoteIOError):
-            mpfexp.md('dir2/subdir1')
+            mpfexp.md("dir2/subdir1")
 
         # relative directory creating
-        mpfexp.cd('dir1')
+        mpfexp.cd("dir1")
         assert "/dir1" == mpfexp.pwd()
-        mpfexp.md('subdir2')
+        mpfexp.md("subdir2")
 
         # created dirs visible for ls and marked as directory
-        mpfexp.cd('/')
+        mpfexp.cd("/")
         assert "/" == mpfexp.pwd()
-        assert ('dir1', 'D') in mpfexp.ls(True, True, True)
-        assert ('dir 1', 'D') in mpfexp.ls(True, True, True)
+        assert ("dir1", "D") in mpfexp.ls(True, True, True)
+        assert ("dir 1", "D") in mpfexp.ls(True, True, True)
 
         # no dir with same name as existing file
         with pytest.raises(RemoteIOError):
-            mpfexp.md('boot.py')
+            mpfexp.md("boot.py")
 
         # subdirs are visible for ls
-        mpfexp.cd('dir1')
+        mpfexp.cd("dir1")
         assert "/dir1" == mpfexp.pwd()
-        assert [('subdir1', 'D'), ('subdir2', 'D')] == mpfexp.ls(True, True, True)
+        assert [("subdir1", "D"), ("subdir2", "D")] == mpfexp.ls(True, True, True)
 
-        mpfexp.cd('subdir1')
+        mpfexp.cd("subdir1")
         assert "/dir1/subdir1" == mpfexp.pwd()
         assert [] == mpfexp.ls(True, True, True)
 
-        mpfexp.cd('..')
-        mpfexp.cd('subdir2')
+        mpfexp.cd("..")
+        mpfexp.cd("subdir2")
         assert "/dir1/subdir2" == mpfexp.pwd()
         assert [] == mpfexp.ls(True, True, True)
 
         # no duplicate directory names
         with pytest.raises(RemoteIOError):
-            mpfexp.cd('subdir1')
+            mpfexp.cd("subdir1")
 
-        #FIXME: not working as expected yet
-        #mpfexp.cd('../subdir1')
-        #assert "/dir1/subdir1" == mpfexp.pwd()
+        # FIXME: not working as expected yet
+        # mpfexp.cd('../subdir1')
+        # assert "/dir1/subdir1" == mpfexp.pwd()
 
         # allow whitespaces in dir names
-        mpfexp.cd('/dir 1')
+        mpfexp.cd("/dir 1")
         assert "/dir 1" == mpfexp.pwd()
         assert [] == mpfexp.ls(True, True, True)
 
@@ -112,8 +112,8 @@ class TestMpfexp:
 
         # upload with different name
         mpfexp.put("file1", "file2")
-        assert ('file1', 'F') in mpfexp.ls(True, True, True)
-        assert ('file2', 'F') in mpfexp.ls(True, True, True)
+        assert ("file1", "F") in mpfexp.ls(True, True, True)
+        assert ("file2", "F") in mpfexp.ls(True, True, True)
 
         os.remove("file1")
         assert not os.path.isfile("file1")
@@ -151,7 +151,7 @@ class TestMpfexp:
         mpfexp.put("file1", "dir2/file1")
         mpfexp.cd("dir2")
         mpfexp.put("file2", "file2")
-        assert [('file1', 'F'), ('file2', 'F')] == mpfexp.ls(True, True, True)
+        assert [("file1", "F"), ("file2", "F")] == mpfexp.ls(True, True, True)
         mpfexp.cd("/")
 
         # fail to put to non-existing directory
@@ -179,7 +179,7 @@ class TestMpfexp:
         # allow whitespaces in file-names
         mpfexp.put("file1", "file 1")
         mpfexp.get("file 1")
-        assert ('file 1', 'F') in mpfexp.ls(True, True, True)
+        assert ("file 1", "F") in mpfexp.ls(True, True, True)
 
     def test_removal(self, mpfexp, tmpdir):
 
@@ -209,9 +209,9 @@ class TestMpfexp:
         mpfexp.rm("dir3")
         mpfexp.rm("dir 3")
 
-        assert ('file10', 'F') not in mpfexp.ls(True, True, True)
-        assert ('dir3', 'D') not in mpfexp.ls(True, True, True)
-        assert ('dir 3', 'D') not in mpfexp.ls(True, True, True)
+        assert ("file10", "F") not in mpfexp.ls(True, True, True)
+        assert ("dir3", "D") not in mpfexp.ls(True, True, True)
+        assert ("dir 3", "D") not in mpfexp.ls(True, True, True)
 
         # fail to remove non-existing file or dir
         with pytest.raises(RemoteIOError):
@@ -230,13 +230,15 @@ class TestMpfexp:
 
         mpfexp.md("dir4")
         mpfexp.cd("dir4")
-        mpfexp.mput(".", "file\.*")
+        mpfexp.mput(".", r"file\.*")
 
-        assert [("file20", "F"), ("file21", "F"), ("file22", "F")] == sorted(mpfexp.ls(True, True, True))
+        assert [("file20", "F"), ("file21", "F"), ("file22", "F")] == sorted(
+            mpfexp.ls(True, True, True)
+        )
 
         os.mkdir("mget")
         os.chdir(os.path.join(str(tmpdir), "mget"))
-        mpfexp.mget(".", "file\.*")
+        mpfexp.mget(".", r"file\.*")
         assert ["file20", "file21", "file22"] == sorted(os.listdir("."))
 
         mpfexp.mget(".", "notmatching")
@@ -307,7 +309,9 @@ class TestMpfexp:
             assert [("file1", "F"), ("file2", "F")] == mpfexp.ls(True, True, True)
 
             mpfexp.md("subdir1")
-            assert [("subdir1", "D"), ("file1", "F"), ("file2", "F")] == mpfexp.ls(True, True, True)
+            assert [("subdir1", "D"), ("file1", "F"), ("file2", "F")] == mpfexp.ls(
+                True, True, True
+            )
 
             mpfexp.rm("file1")
             mpfexp.rm("file2")
