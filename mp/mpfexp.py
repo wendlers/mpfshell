@@ -165,7 +165,7 @@ class MpFileExplorer(Pyboard):
     def setup(self):
 
         self.enter_raw_repl()
-        self.exec_("import uos, sys")
+        self.exec_("try:\n    import uos\nexcept ImportError:\n    import os as uos\nimport sys")
         self.exec_(
             "try:\n    import ubinascii\nexcept ImportError:\n    import binascii as ubinascii"
         )
