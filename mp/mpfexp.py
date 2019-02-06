@@ -28,6 +28,7 @@ import binascii
 import getpass
 import logging
 import os
+import posixpath  # force posix-style slashes
 import re
 import sre_constants
 import subprocess
@@ -147,7 +148,7 @@ class MpFileExplorer(Pyboard):
         return con
 
     def _fqn(self, name):
-        return os.path.join(self.dir, name)
+        return posixpath.join(self.dir, name)
 
     def __set_sysname(self):
         self.sysname = self.eval("uos.uname()[0]").decode("utf-8")
@@ -173,7 +174,7 @@ class MpFileExplorer(Pyboard):
         # New version mounts files on /flash so lets set dir based on where we are in
         # filesystem.
         # Using the "path.join" to make sure we get "/" if "os.getcwd" returns "".
-        self.dir = os.path.join("/", self.eval("uos.getcwd()").decode("utf8"))
+        self.dir = posixpath.join("/", self.eval("uos.getcwd()").decode("utf8"))
 
         self.__set_sysname()
 
@@ -294,7 +295,7 @@ class MpFileExplorer(Pyboard):
                     if verbose:
                         print(" * put %s" % f)
 
-                    self.put(os.path.join(src_dir, f), f)
+                    self.put(posixpath.join(src_dir, f), f)
 
         except sre_constants.error as e:
             raise RemoteIOError("Error in regular expression: %s" % e)
@@ -344,7 +345,7 @@ class MpFileExplorer(Pyboard):
                     if verbose:
                         print(" * get %s" % f)
 
-                    self.get(f, dst=os.path.join(dst_dir, f))
+                    self.get(f, dst=posixpath.join(dst_dir, f))
 
         except sre_constants.error as e:
             raise RemoteIOError("Error in regular expression: %s" % e)
