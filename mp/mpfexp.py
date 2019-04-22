@@ -34,8 +34,6 @@ import subprocess
 
 from mp.conbase import ConError
 from mp.conserial import ConSerial
-from mp.contelnet import ConTelnet
-from mp.conwebsock import ConWebsock
 from mp.pyboard import Pyboard, PyboardError
 from mp.retry import retry
 
@@ -131,6 +129,7 @@ class MpFileExplorer(Pyboard):
                 passwd = getpass.getpass("telnet passwd: ")
 
             # print("telnet connection to: %s, %s, %s" % (host, login, passwd))
+            from mp.contelnet import ConTelnet
             con = ConTelnet(ip=host, user=login, password=passwd)
 
         elif proto.strip(" ") == "ws":
@@ -142,6 +141,7 @@ class MpFileExplorer(Pyboard):
             else:
                 passwd = getpass.getpass("webrepl passwd: ")
 
+            from mp.conwebsock import ConWebsock
             con = ConWebsock(host, passwd)
 
         return con
