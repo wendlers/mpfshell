@@ -131,9 +131,13 @@ class Pyboard:
             raise PyboardError("could not enter raw repl")
 
         # write command
-        for i in range(0, len(command_bytes), 256):
-            self.con.write(command_bytes[i : min(i + 256, len(command_bytes))])
-            time.sleep(0.01)
+        JUNKSIZE=256
+        for i in range(0, len(command_bytes), JUNKSIZE):
+            end = min(i + JUNKSIZE, len(command_bytes))
+            self.con.write(command_bytes[i : end])
+            if end >= i + JUNKSIZE:
+                # Wait, but not the last time
+                time.sleep(0.01)
         self.con.write(b"\x04")
 
         # check if we could exec command
