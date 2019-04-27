@@ -30,11 +30,11 @@ from serial import Serial
 
 
 class ConSerial(ConBase):
-    def __init__(self, port, baudrate=115200, reset=False):
+    def __init__(self, port, baudrate=115200, reset=False, timeout=1):
         ConBase.__init__(self)
 
         try:
-            self.serial = Serial(port, baudrate=baudrate, interCharTimeout=1)
+            self.serial = Serial(port, baudrate=baudrate, interCharTimeout=1, timeout=timeout)
 
             if reset:
                 logging.info("Hard resetting device at port: %s" % port)
