@@ -32,16 +32,16 @@ Main features:
 * Best of all: it comes with color
 
 
-__Note__: The software is mainly tested on Ubunto 16.04 LTS. However, there is basic Windows support
-(tested with Python 3.5 and PySerial 3.1), but some of the keys (e.g. Tab are note working as
-expected yet).
+__Note__: The software is mainly tested on Ubuntu 16.04 LTS. However, there is basic Windows support
+(tested with Python 3.5 and PySerial 3.1), but some of the keys (e.g. Tab) are note working as
+expected yet.
 
 ## Requirements
 
 General:
 
 * ESP8266 or WiPy board running latest [Micropython](https://github.com/micropython/micropython)
-* For the ESP8266 firware build from the repository, please note, that WebREPL is not started
+* For the ESP8266 firmware build from the repository, please note, that WebREPL is not started
   by default. For more information see the [quickstart](http://micropython.org/resources/docs/en/latest/esp8266/esp8266/quickref.html#webrepl-web-browser-interactive-prompt).
 * For the WiPy, please note, that you need to enable REPL on UART if you intend to connect
   via serial line to the WiPy (see [here](http://micropython.org/resources/docs/en/latest/wipy/wipy/tutorial/repl.html))
@@ -53,7 +53,7 @@ For the shell:
 
 __IMPORTANT__: It is highly recommended to use PySerial version 3.x on Python 2 and 3.
 
-__Note__: The tools only works if the REPL is accessible on the device!
+__Note__: The tools only work if the REPL is accessible on the device!
 
 ## Installing
 
@@ -81,19 +81,19 @@ To install for __Python 3__, execute the following:
 
 ## Known Issues
 
-* For PySerial 2.6 the REPL is deactivated since Miniterm which comes with 2.6
-    seams broken.
+* For PySerial 2.6 the REPL is deactivated since Miniterm (which comes with 2.6)
+    seems broken.
 
 ## General
 
 ### TAB Completion
 
 The shell supports TAB completion for commands and file names.
-So it totally is worth it pressing TAB-TAB every now and then :-)
+So it's totally worth pressing TAB-TAB every now and then :-)
 
 ### File/Directory Names
 
-File-names including whitespaces are supported, but such names need to be enclosed
+File names including whitespaces are supported, but such names need to be enclosed
 in quotes. E.g. accessing a file named "with white space.txt" needs to quoted:
 
     get "with white space.txt"
@@ -199,7 +199,7 @@ Enter REPL:
 
     repl
 
-To exit REPL and return to the file shell use Ctrl+Alt+]
+To exit REPL and return to the file shell use Ctrl+]
 
 For a full list of commands use:
 
@@ -233,9 +233,9 @@ And execute it with:
 
 ## Running the Shell in a Virtual Environment
 
-Somtimes it is the easiest way to setup a virtual environment to satisfy the
-requirements. E.g. on Debian Jessi (which still has PySerial 2.6), this could be
-done like so (assuming you are within the `mpfshell` base directory:
+Somtimes the easiest way to satisfy the requirements is to setup a virtual environment. 
+E.g. on Debian Jessie (which still has PySerial 2.6), this could be
+done like so (assuming you are within the `mpfshell` base directory):
 
 Install support for virtual environments:
 
@@ -247,7 +247,7 @@ Create a new virtual environment:
 
 Or you could use `python3 -m virtualenv venv` instead of `pyvenv`.
 
-Activate it (so ervery following `pip install` goes to the new virtuel environment):
+Activate it (so every following `pip install` goes to the new virtual environment):
 
     source venv/bin/activate
 
@@ -260,4 +260,4 @@ Now run the shell with the following command:
 
     python -m mp.mpfshell
 
-__Note:__ The environment has always to be activated with the above command before using it.
+__Note:__ The environment always has to be activated with the above command before using it.
