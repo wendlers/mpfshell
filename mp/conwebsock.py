@@ -72,7 +72,7 @@ class ConWebsock(ConBase, threading.Thread):
     def __del__(self):
         self.close()
 
-    def on_message(self, ws, message):
+    def on_message(self, message):
         self.fifo.extend(message)
 
         try:
@@ -80,7 +80,7 @@ class ConWebsock(ConBase, threading.Thread):
         except:
             pass
 
-    def on_error(self, ws, error):
+    def on_error(self, error):
         logging.error("websocket error: %s" % error)
 
         try:
