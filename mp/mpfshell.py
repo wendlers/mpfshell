@@ -613,6 +613,7 @@ class MpFileShell(cmd.Cmd):
             else:
                 self.repl.serial = self.fe.con
 
+            pwd = self.fe.pwd()
             self.fe.teardown()
             self.repl.start()
 
@@ -633,7 +634,13 @@ class MpFileShell(cmd.Cmd):
                 self.fe.cache = {}
 
             self.fe.setup()
-            self.__set_prompt_path()
+            try:
+                self.fe.cd(pwd)
+            except RemoteIOError as e:
+                # Working directory does not exist anymore
+                self.__error(str(e))
+            finally:
+                self.__set_prompt_path()
             print("")
 
     def do_mpyc(self, args):
