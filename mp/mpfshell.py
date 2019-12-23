@@ -633,6 +633,7 @@ class MpFileShell(cmd.Cmd):
                 self.fe.cache = {}
 
             self.fe.setup()
+            self.__set_prompt_path()
             print("")
 
     def do_mpyc(self, args):
