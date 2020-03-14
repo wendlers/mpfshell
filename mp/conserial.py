@@ -44,7 +44,7 @@ class ConSerial(ConBase):
                 self.serial.setDTR(False)
 
                 self.serial.close()
-                self.serial = Serial(port, baudrate=baudrate, interCharTimeout=1)
+                self.serial = Serial(port, baudrate=baudrate, interCharTimeout=1, timeout=timeout)
 
                 while True:
                     time.sleep(2.0)
