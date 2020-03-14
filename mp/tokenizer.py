@@ -56,7 +56,7 @@ class Token(object):
 class Tokenizer(object):
     def __init__(self):
 
-        valid_fnchars = r"A-Za-z0-9_%#~@/\$!\*\.\+\-"
+        valid_fnchars = r"A-Za-z0-9_%#~@/\$!\*\.\+\-\:"
 
         tokens = [
             (r"[%s]+" % valid_fnchars, lambda scanner, token: Token(Token.STR, token)),
