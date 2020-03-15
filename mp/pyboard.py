@@ -131,13 +131,11 @@ class Pyboard:
             raise PyboardError("could not enter raw repl")
 
         # write command
-        for i in range(0, len(command_bytes), 256):
-            self.con.write(command_bytes[i : min(i + 256, len(command_bytes))])
-            time.sleep(0.01)
+        self.con.write(command_bytes)
         self.con.write(b"\x04")
 
         # check if we could exec command
-        data = self.con.read(2)
+        data = self.read_until(2, b"OK", timeout=0.5)
         if data != b"OK":
             raise PyboardError("could not exec command")
 
