@@ -571,7 +571,7 @@ class MpFileShell(cmd.Cmd):
                 ret = self.fe.follow(None, data_consumer)
 
                 if len(ret[-1]):
-                    self.__error(ret[-1])
+                    self.__error(ret[-1].decode("utf-8"))
 
             except IOError as e:
                 self.__error(str(e))
