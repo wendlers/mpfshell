@@ -23,7 +23,6 @@
 ##
 
 
-import tempfile
 import argparse
 import cmd
 import glob
@@ -32,6 +31,7 @@ import logging
 import os
 import platform
 import sys
+import tempfile
 
 import colorama
 import serial
@@ -700,7 +700,11 @@ class MpFileShell(cmd.Cmd):
             if len(s_args) > 1:
                 rfile_name = s_args[1]
             else:
-                rfile_name = (lfile_name[:lfile_name.rfind(".")] if "." in lfile_name else lfile_name) + ".mpy"
+                rfile_name = (
+                    lfile_name[: lfile_name.rfind(".")]
+                    if "." in lfile_name
+                    else lfile_name
+                ) + ".mpy"
 
             _, tmp = tempfile.mkstemp()
 
@@ -711,6 +715,7 @@ class MpFileShell(cmd.Cmd):
                 self.__error(str(e))
 
             os.unlink(tmp)
+
     complete_putc = complete_mpyc
 
 

@@ -166,7 +166,9 @@ class MpFileExplorer(Pyboard):
     def setup(self):
 
         self.enter_raw_repl()
-        self.exec_("try:\n    import uos\nexcept ImportError:\n    import os as uos\nimport sys")
+        self.exec_(
+            "try:\n    import uos\nexcept ImportError:\n    import os as uos\nimport sys"
+        )
         self.exec_(
             "try:\n    import ubinascii\nexcept ImportError:\n    import binascii as ubinascii"
         )
@@ -492,7 +494,11 @@ class MpFileExplorerCaching(MpFileExplorer):
             hit = MpFileExplorer.ls(self, True, True, True)
             self.__cache(self.dir, hit)
 
-        files = [f for f in hit if ((add_files and f[1] == "F") or (add_dirs and f[1] == "D"))]
+        files = [
+            f
+            for f in hit
+            if ((add_files and f[1] == "F") or (add_dirs and f[1] == "D"))
+        ]
         files.sort(key=lambda x: (x[1], x[0]))
         if not add_details:
             files = [f[0] for f in files]
