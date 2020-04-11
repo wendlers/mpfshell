@@ -128,6 +128,7 @@ class MpFileShell(cmd.Cmd):
                 self.fe = MpFileExplorer(port, self.reset)
             print("Connected to %s" % self.fe.sysname)
             self.__set_prompt_path()
+            return True
         except PyboardError as e:
             logging.error(e)
             self.__error(str(e))
@@ -137,6 +138,7 @@ class MpFileShell(cmd.Cmd):
         except AttributeError as e:
             logging.error(e)
             self.__error("Failed to open: %s" % port)
+        return False
 
     def __disconnect(self):
 
@@ -188,20 +190,21 @@ class MpFileShell(cmd.Cmd):
 
         if not len(args):
             self.__error("Missing argument: <PORT>")
-        else:
-            if (
-                not args.startswith("ser:/dev/")
-                and not args.startswith("ser:COM")
-                and not args.startswith("tn:")
-                and not args.startswith("ws:")
-            ):
+            return False
 
-                if platform.system() == "Windows":
-                    args = "ser:" + args
-                else:
-                    args = "ser:/dev/" + args
+        if (
+            not args.startswith("ser:/dev/")
+            and not args.startswith("ser:COM")
+            and not args.startswith("tn:")
+            and not args.startswith("ws:")
+        ):
 
-            self.__connect(args)
+            if platform.system() == "Windows":
+                args = "ser:" + args
+            else:
+                args = "ser:/dev/" + args
+
+        return self.__connect(args)
 
     def complete_open(self, *args):
         ports = glob.glob("/dev/ttyUSB*") + glob.glob("/dev/ttyACM*")
@@ -784,7 +787,8 @@ def main():
 
     if args.open is not None:
         if args.board is None:
-            mpfs.do_open(args.open)
+            if not mpfs.do_open(args.open):
+                return 1
         else:
             print(
                 "Positional argument ({}) takes precedence over --open.".format(
@@ -831,4 +835,4 @@ def main():
 
 if __name__ == "__main__":
 
-    main()
+    sys.exit(main())
