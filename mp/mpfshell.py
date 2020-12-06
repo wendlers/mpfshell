@@ -812,6 +812,9 @@ def main():
 
     elif args.script is not None:
 
+        if platform.system() == "Windows":
+            mpfs.use_rawinput = True
+            
         f = open(args.script, "r")
         script = ""
 
