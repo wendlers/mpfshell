@@ -21,8 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 ##
-
-
 import argparse
 import cmd
 import glob
@@ -35,9 +33,12 @@ import tempfile
 
 import colorama
 import serial
+
 from mp import version
 from mp.conbase import ConError
-from mp.mpfexp import MpFileExplorer, MpFileExplorerCaching, RemoteIOError
+from mp.mpfexp import MpFileExplorer
+from mp.mpfexp import MpFileExplorerCaching
+from mp.mpfexp import RemoteIOError
 from mp.pyboard import PyboardError
 from mp.tokenizer import Tokenizer
 
@@ -258,8 +259,8 @@ class MpFileShell(cmd.Cmd):
 
     def do_pwd(self, args):
         """pwd
-         Print current remote directory.
-         """
+        Print current remote directory.
+        """
         if self.__is_open():
             print(self.fe.pwd())
 

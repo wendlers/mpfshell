@@ -21,14 +21,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 ##
-
-
 import sys
 import telnetlib
 import time
 from collections import deque
 
-from mp.conbase import ConBase, ConError
+from mp.conbase import ConBase
+from mp.conbase import ConError
 
 
 class ConTelnet(ConBase):

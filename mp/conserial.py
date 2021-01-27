@@ -21,12 +21,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 ##
-
 import logging
 import time
 
-from mp.conbase import ConBase, ConError
 from serial import Serial
+
+from mp.conbase import ConBase
+from mp.conbase import ConError
 
 
 class ConSerial(ConBase):

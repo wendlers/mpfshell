@@ -21,8 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 ##
-
-
 import ast
 import binascii
 import getpass
@@ -37,7 +35,8 @@ from mp.conbase import ConError
 from mp.conserial import ConSerial
 from mp.contelnet import ConTelnet
 from mp.conwebsock import ConWebsock
-from mp.pyboard import Pyboard, PyboardError
+from mp.pyboard import Pyboard
+from mp.pyboard import PyboardError
 from mp.retry import retry
 
 

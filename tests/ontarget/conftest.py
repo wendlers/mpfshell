@@ -21,12 +21,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 ##
-
 # enable logging of modules under test
 import logging
 
 import pytest
-from mp.mpfexp import MpFileExplorer, MpFileExplorerCaching
+
+from mp.mpfexp import MpFileExplorer
+from mp.mpfexp import MpFileExplorerCaching
 
 _mpfexp_inst = None
 

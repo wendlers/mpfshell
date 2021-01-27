@@ -21,15 +21,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 ##
-
-
 import logging
 import threading
 import time
 from collections import deque
 
 import websocket
-from mp.conbase import ConBase, ConError
+
+from mp.conbase import ConBase
+from mp.conbase import ConError
 
 
 class ConWebsock(ConBase, threading.Thread):

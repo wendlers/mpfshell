@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-
 """
 Pyboard REPL interface
 """
-
 import sys
 import time
 

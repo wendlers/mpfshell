@@ -1,4 +1,5 @@
-from mp.tokenizer import Token, Tokenizer
+from mp.tokenizer import Token
+from mp.tokenizer import Tokenizer
 
 
 class TestTokenizer:
