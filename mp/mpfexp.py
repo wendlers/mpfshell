@@ -463,7 +463,7 @@ class MpFileExplorer(Pyboard):
             return_code = subprocess.call("mpy-cross -o %s %s" % (dst, src), shell=True)
 
         if return_code != 0:
-            raise IOError("Filed to compile: %s" % src)
+            raise IOError("Failed to compile: %s" % src)
 
 
 class MpFileExplorerCaching(MpFileExplorer):
