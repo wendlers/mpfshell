@@ -73,7 +73,7 @@ def mpsetup(request):
             "pytest.py",
             """
 def rm(path):
-    import os
+    import uos as os
     files = os.listdir(path)
     for f in files:
         if f not in ['boot.py', 'port_config.py']:
