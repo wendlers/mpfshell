@@ -88,7 +88,7 @@ def rm(path):
         )
 
         fe.exec_("import pytest")
-        fe.exec_("pytest.rm(os.getcwd())")
+        fe.exec_("pytest.rm('.')")
 
 
 @pytest.fixture(scope="function")
