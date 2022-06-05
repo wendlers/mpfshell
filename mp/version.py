@@ -23,6 +23,6 @@
 ##
 
 
-FULL = "0.9.2"
+FULL = "0.9.3"
 
 MAJOR, MINOR, PATCH = FULL.split(".")
