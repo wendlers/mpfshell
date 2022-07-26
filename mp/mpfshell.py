@@ -170,6 +170,12 @@ class MpFileShell(cmd.Cmd):
 
         return None
 
+    def postcmd(self, stop, line):
+        # keep the shell open until manually exited
+        if line.startswith("exit") or line.startswith("EOF"):
+            return True
+        return False
+
     def do_exit(self, args):
         """exit
         Exit this shell.
