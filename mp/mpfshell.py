@@ -211,7 +211,7 @@ class MpFileShell(cmd.Cmd):
             else:
                 args = "ser:/dev/" + args
 
-        return self.__connect(args)
+        return self.__connect(args) == True
 
     def complete_open(self, *args):
         ports = glob.glob("/dev/ttyUSB*") + glob.glob("/dev/ttyACM*")
