@@ -30,9 +30,11 @@ import os
 import platform
 import sys
 import tempfile
+import json
 
 import colorama
 import serial
+from serial.tools.list_ports import comports
 
 from mp import version
 from mp.conbase import ConError
@@ -69,7 +71,6 @@ class MpFileShell(cmd.Cmd):
         self.__disconnect()
 
     def __intro(self):
-
         if self.color:
             self.intro = (
                 "\n"
@@ -90,7 +91,6 @@ class MpFileShell(cmd.Cmd):
         )
 
     def __set_prompt_path(self):
-
         if self.fe is not None:
             pwd = self.fe.pwd()
         else:
@@ -110,14 +110,12 @@ class MpFileShell(cmd.Cmd):
             self.prompt = "mpfs [" + pwd + "]> "
 
     def __error(self, msg):
-
         if self.color:
             print("\n" + colorama.Fore.RED + msg + colorama.Fore.RESET + "\n")
         else:
             print("\n" + msg + "\n")
 
     def __connect(self, port):
-
         try:
             self.__disconnect()
 
@@ -142,7 +140,6 @@ class MpFileShell(cmd.Cmd):
         return False
 
     def __disconnect(self):
-
         if self.fe is not None:
             try:
                 self.fe.close()
@@ -152,7 +149,6 @@ class MpFileShell(cmd.Cmd):
                 self.__error(str(e))
 
     def __is_open(self):
-
         if self.fe is None:
             self.__error("Not connected to device. Use 'open' first.")
             return False
@@ -160,7 +156,6 @@ class MpFileShell(cmd.Cmd):
         return True
 
     def __parse_file_names(self, args):
-
         tokens, rest = self.tokenizer.tokenize(args)
 
         if rest != "":
@@ -205,7 +200,6 @@ class MpFileShell(cmd.Cmd):
             and not args.startswith("tn:")
             and not args.startswith("ws:")
         ):
-
             if platform.system() == "Windows":
                 args = "ser:" + args
             else:
@@ -291,7 +285,6 @@ class MpFileShell(cmd.Cmd):
                 self.__error(str(e))
 
     def complete_cd(self, *args):
-
         try:
             files = self.fe.ls(add_files=False)
         except Exception:
@@ -385,7 +378,6 @@ class MpFileShell(cmd.Cmd):
             self.__error("Missing arguments: <LOCAL FILE> [<REMOTE FILE>]")
 
         elif self.__is_open():
-
             s_args = self.__parse_file_names(args)
             if not s_args:
                 return
@@ -423,7 +415,6 @@ class MpFileShell(cmd.Cmd):
             self.__error("Missing argument: <SELECTION REGEX>")
 
         elif self.__is_open():
-
             try:
                 self.fe.mput(os.getcwd(), args, True)
             except IOError as e:
@@ -440,7 +431,6 @@ class MpFileShell(cmd.Cmd):
             self.__error("Missing arguments: <REMOTE FILE> [<LOCAL FILE>]")
 
         elif self.__is_open():
-
             s_args = self.__parse_file_names(args)
             if not s_args:
                 return
@@ -474,14 +464,12 @@ class MpFileShell(cmd.Cmd):
             self.__error("Missing argument: <SELECTION REGEX>")
 
         elif self.__is_open():
-
             try:
                 self.fe.mget(os.getcwd(), args, True)
             except IOError as e:
                 self.__error(str(e))
 
     def complete_get(self, *args):
-
         try:
             files = self.fe.ls(add_dirs=False)
         except Exception:
@@ -499,7 +487,6 @@ class MpFileShell(cmd.Cmd):
         if not len(args):
             self.__error("Missing argument: <REMOTE FILE>")
         elif self.__is_open():
-
             s_args = self.__parse_file_names(args)
             if not s_args:
                 return
@@ -525,14 +512,12 @@ class MpFileShell(cmd.Cmd):
             self.__error("Missing argument: <SELECTION REGEX>")
 
         elif self.__is_open():
-
             try:
                 self.fe.mrm(args, True)
             except IOError as e:
                 self.__error(str(e))
 
     def complete_rm(self, *args):
-
         try:
             files = self.fe.ls()
         except Exception:
@@ -548,7 +533,6 @@ class MpFileShell(cmd.Cmd):
         if not len(args):
             self.__error("Missing argument: <REMOTE FILE>")
         elif self.__is_open():
-
             s_args = self.__parse_file_names(args)
             if not s_args:
                 return
@@ -575,7 +559,6 @@ class MpFileShell(cmd.Cmd):
         if not len(args):
             self.__error("Missing argument: <STATEMENT>")
         elif self.__is_open():
-
             try:
                 self.fe.exec_raw_no_follow(args + "\n")
                 ret = self.fe.follow(None, data_consumer)
@@ -604,9 +587,7 @@ class MpFileShell(cmd.Cmd):
             return
 
         if self.__is_open():
-
             if self.repl is None:
-
                 from mp.term import Term
 
                 self.repl = Term(self.fe.con)
@@ -662,7 +643,6 @@ class MpFileShell(cmd.Cmd):
         if not len(args):
             self.__error("Missing argument: <LOCAL FILE>")
         else:
-
             s_args = self.__parse_file_names(args)
             if not s_args:
                 return
@@ -726,8 +706,46 @@ class MpFileShell(cmd.Cmd):
     complete_putc = complete_mpyc
 
 
-def main():
+def get_available_ports(raw=False) -> [str]:
+    try:
+        ports = comports()
+        if raw is False:
+            connected = sorted(list(map(lambda x: x.device, ports)))
+        else:
+            connected = ports
+        return connected
+    except:
+        return []
 
+
+def ask_device(serial_devices=None) -> str:
+    if serial_devices is None:
+        serial_devices = get_available_ports()
+    dev_cnt = len(serial_devices)
+    if dev_cnt == 1:
+        device = serial_devices[0]
+    elif dev_cnt > 1:
+        for i, t in enumerate(serial_devices):
+            print("* " if i == 0 else "  ", f"{i}", t)
+        while True:
+            n = input(f"select device [0] ")
+            try:
+                n = n.strip()
+                if len(n) == 0:
+                    n = 0
+                n = int(n)
+                if n >= 0 or n < dev_cnt:
+                    break
+            except:
+                pass
+            print("enter a valid number", file=sys.stderr)
+        device = serial_devices[n]
+    else:
+        device = None
+    return device
+
+
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-c",
@@ -768,19 +786,89 @@ def main():
         default=False,
     )
 
+    list_parser = parser.add_mutually_exclusive_group()
+    list_parser.add_argument(
+        "-ls",
+        "--list-dev",
+        help="list connected devices",
+        action="store_true",
+        default=False,
+    )
+    list_parser.add_argument(
+        "-lsr",
+        "--list-dev-raw",
+        help="list connected devices (raw)",
+        action="store_true",
+        default=False,
+    )
+    list_parser.add_argument(
+        "-lsrp",
+        "--list-dev-raw-pretty",
+        help="list connected devices pretty (raw)",
+        action="store_true",
+        default=False,
+    )
+
+    parser.add_argument(
+        "-i",
+        "--ask",
+        help="ask which board to open, or in case just one device is connect open this",
+        action="store_true",
+        default=False,
+    )
     parser.add_argument(
         "-o",
         "--open",
         help="directly opens board",
-        metavar="BOARD",
+        metavar="board",
         action="store",
         default=None,
+        nargs="?",
     )
     parser.add_argument(
         "board", help="directly opens board", nargs="?", action="store", default=None
     )
 
     args = parser.parse_args()
+
+    if args.list_dev or args.list_dev_raw or args.list_dev_raw_pretty:
+        devs = get_available_ports(raw=True)
+
+        if args.list_dev_raw or args.list_dev_raw_pretty:
+            infolist = []
+            for dev in devs:
+                info = {}
+                for k in [
+                    "description",
+                    "device",
+                    "device_path",
+                    "hwid",
+                    "interface",
+                    "location",
+                    "manufacturer",
+                    "name",
+                    "product",
+                    "serial_number",
+                    "subsystem",
+                    "usb_device_path",
+                    "usb_interface_path",
+                    "vid",
+                ]:
+                    try:
+                        v = getattr(dev, k)
+                        info[k] = v
+                    except:
+                        pass
+                infolist.append(info)
+
+            if args.list_dev_raw_pretty:
+                print(json.dumps(infolist, indent=4))
+            else:
+                print(infolist)
+        else:
+            for dev in devs:
+                print(dev.device)
+        sys.exit(0)
 
     format = "%(asctime)s\t%(levelname)s\t%(message)s"
 
@@ -797,6 +885,15 @@ def main():
 
     mpfs = MpFileShell(not args.nocolor, not args.nocache, args.reset)
 
+    if args.ask:
+        dev = ask_device()
+        pos = dev.rfind(os.sep)
+        if pos >= 0:
+            # todo
+            # check on winows and mac platform
+            dev = dev[pos + 1 :]
+        args.open = dev
+
     if args.open is not None:
         if args.board is None:
             if not mpfs.do_open(args.open):
@@ -811,14 +908,12 @@ def main():
         mpfs.do_open(args.board)
 
     if args.command is not None:
-
         for acmd in " ".join(args.command).split(";"):
             scmd = acmd.strip()
             if len(scmd) > 0 and not scmd.startswith("#"):
                 mpfs.onecmd(scmd)
 
     elif args.script is not None:
-
         if platform.system() == "Windows":
             mpfs.use_rawinput = True
 
@@ -826,7 +921,6 @@ def main():
         script = ""
 
         for line in f:
-
             sline = line.strip()
 
             if len(sline) > 0 and not sline.startswith("#"):
@@ -841,7 +935,6 @@ def main():
         mpfs.prompt = ""
 
     if not args.noninteractive:
-
         try:
             mpfs.cmdloop()
         except KeyboardInterrupt:
@@ -849,5 +942,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     sys.exit(main())
