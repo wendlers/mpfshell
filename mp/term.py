@@ -63,7 +63,6 @@ if serial.VERSION.startswith("2."):
         def set_tx_encoding(self, enc):
             pass
 
-
 else:
 
     # see if we could use the new Miniterm implementation

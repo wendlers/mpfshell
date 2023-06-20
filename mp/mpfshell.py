@@ -25,12 +25,12 @@ import argparse
 import cmd
 import glob
 import io
+import json
 import logging
 import os
 import platform
 import sys
 import tempfile
-import json
 
 import colorama
 import serial
@@ -728,7 +728,7 @@ def ask_device(serial_devices=None) -> str:
         for i, t in enumerate(serial_devices):
             print("* " if i == 0 else "  ", f"{i}", t)
         while True:
-            n = input(f"select device [0] ")
+            n = input("select device [0] ")
             try:
                 n = n.strip()
                 if len(n) == 0:

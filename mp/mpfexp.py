@@ -517,7 +517,7 @@ class MpFileExplorerCaching(MpFileExplorer):
         hit = self.__cache_hit(parent)
 
         if hit is not None:
-            if not (dst, "F") in hit:
+            if (dst, "F") not in hit:
                 self.__cache(parent, hit + [(newitm, "F")])
 
     def puts(self, dst, lines):
@@ -531,7 +531,7 @@ class MpFileExplorerCaching(MpFileExplorer):
         hit = self.__cache_hit(parent)
 
         if hit is not None:
-            if not (dst, "F") in hit:
+            if (dst, "F") not in hit:
                 self.__cache(parent, hit + [(newitm, "F")])
 
     def md(self, dir):
@@ -545,7 +545,7 @@ class MpFileExplorerCaching(MpFileExplorer):
         hit = self.__cache_hit(parent)
 
         if hit is not None:
-            if not (dir, "D") in hit:
+            if (dir, "D") not in hit:
                 self.__cache(parent, hit + [(newitm, "D")])
 
     def rm(self, target):

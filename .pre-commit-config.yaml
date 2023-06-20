@@ -1,15 +1,24 @@
 repos:
 - repo: https://github.com/ambv/black
-  rev: 20.8b1
+  rev: 22.12.0
   hooks:
   - id: black
+    name: Reformat files
 - repo: https://github.com/asottile/reorder_python_imports
-  rev: v2.3.5
+  rev: v3.9.0
   hooks:
-  -   id: reorder-python-imports
-- repo: https://gitlab.com/pycqa/flake8
-  rev: '3.8.4'
+  - id: reorder-python-imports
+    name: Reorder imports
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: 'v0.0.235'
   hooks:
-  - id: flake8
-    args: ["--config=setup.cfg"]
-    language_version: python3
+    - id: ruff
+- repo: local
+  hooks:
+  - id: gitchangelog
+    language: system
+    always_run: true
+    pass_filenames: false
+    name: Generate changelog
+    entry: bash -c "gitchangelog > CHANGELOG.md"
+    stages: [commit]
