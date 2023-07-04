@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 ##
 import argparse
+import binascii
 import cmd
 import glob
 import io
@@ -553,7 +554,10 @@ class MpFileShell(cmd.Cmd):
         """
 
         def data_consumer(data):
-            data = str(data.decode("utf-8"))
+            try:
+                data = str(data.decode("utf-8"))
+            except UnicodeDecodeError:
+                data = "\\x" + binascii.hexlify(data).decode()
             sys.stdout.write(data.strip("\x04"))
 
         if not len(args):
