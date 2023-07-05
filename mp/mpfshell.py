@@ -554,11 +554,11 @@ class MpFileShell(cmd.Cmd):
         """
 
         def data_consumer(data):
-            try:
-                data = str(data.decode("utf-8"))
-            except UnicodeDecodeError:
-                data = "\\x" + binascii.hexlify(data).decode()
-            sys.stdout.write(data.strip("\x04"))
+            data = data.replace(b"\x04", b"")
+            # write raw bytes to stdout
+            sys.stdout.buffer.write(data)
+            # make sure that no data remains in an internal buffer
+            sys.stdout.flush()
 
         if not len(args):
             self.__error("Missing argument: <STATEMENT>")
