@@ -554,10 +554,9 @@ class MpFileShell(cmd.Cmd):
         """
 
         def data_consumer(data):
+            # Delete garbage characters, as they can make the connection fail.
             data = data.replace(b"\x04", b"")
-            # write raw bytes to stdout
             sys.stdout.buffer.write(data)
-            # make sure that no data remains in an internal buffer
             sys.stdout.flush()
 
         if not len(args):
