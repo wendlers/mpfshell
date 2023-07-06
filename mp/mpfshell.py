@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 ##
 import argparse
+import binascii
 import cmd
 import glob
 import io
@@ -553,8 +554,10 @@ class MpFileShell(cmd.Cmd):
         """
 
         def data_consumer(data):
-            data = str(data.decode("utf-8"))
-            sys.stdout.write(data.strip("\x04"))
+            # Delete garbage characters, as they can make the connection fail.
+            data = data.replace(b"\x04", b"")
+            sys.stdout.buffer.write(data)
+            sys.stdout.flush()
 
         if not len(args):
             self.__error("Missing argument: <STATEMENT>")
