@@ -113,7 +113,8 @@ class MpFileExplorer(Pyboard):
             else:
                 baudrate = 115200
 
-            con = ConSerial(port=port, baudrate=baudrate, reset=self.reset)
+            timeout = 0.1 # 100 ms timeout in serial.read()
+            con = ConSerial(port=port, baudrate=baudrate, reset=self.reset, timeout=timeout)
 
         elif proto.strip(" ") == "tn":
 
