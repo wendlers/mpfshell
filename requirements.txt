@@ -1,3 +1,4 @@
 pyserial ~= 3.4
 colorama ~= 0.3.6
 websocket_client ~= 0.35.0
+telnetlib-313-and-up; python_version >= '3.13'
