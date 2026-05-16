@@ -37,6 +37,22 @@ class TestTokenizer:
                     Token(Token.STR, "$1+2_3%2*1+2-2/#.py~"),
                 ],
             ),
+            (
+                # Verifies Windows path parsing with a forward slash
+                "lcd C:\\FakeFolder\\TestPath",
+                [
+                    Token(Token.STR, "lcd"),
+                    Token(Token.STR, "C:\\FakeFolder\\TestPath"),
+                ]
+            ),
+            (
+                # Verifies literal backslahses within a POXIX/Linus filename is parsed correctly
+                "put linux\\file\\name.py",
+                [
+                    Token(Token.STR, "put"),
+                    Token(Token.STR, "linux\\file\\name.py"),
+                ]
+            )
         ]
 
         t = Tokenizer()
